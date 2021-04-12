@@ -1,0 +1,44 @@
+module Rpick
+  module Workflows
+    class GroundBoxes < Workflow
+      def run
+        boxes = GameObj.loot.select{|l| l.noun =~ Dictionary.box_noun_regex }
+        boxes.each do |box|
+          @current_box = box
+          get_box
+          handle_box ? return_open_box : return_locked_box
+        end
+      end
+
+      def get_box # obtain a box to work on
+        return true # No-op -- the boxes are on the ground
+      end
+
+      def return_open_box # return a succesfully handled box
+        if @picker.session_settings[:loot_from_ground]
+          fput "get ##{@current_box[:id]}"
+          fput "open ##{@current_box[:id]}"
+          fput "get coins"
+          waitrt?
+
+          fput "empty ##{@current_box[:id]} into ##{@picker.inventory[:containers][:loot_container][:id]}"
+          waitrt?
+          fput "stow ##{@current_box[:id]}"
+        end
+
+        return true # No-op, the box is on the ground
+      end
+
+      def return_locked_box # return a box that could not be successfully handled
+        if @picker.session_settings[:loot_from_ground]
+          # This is our box, we should grab and stow
+          fput "get ##{@current_box[:id]}"
+          fput "stow ##{@current_box[:id]}"
+        end
+
+        return true # No-op, the box is on the ground
+      end
+    end
+
+  end
+end

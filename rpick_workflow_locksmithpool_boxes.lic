@@ -1,0 +1,123 @@
+module Rpick
+  module Workflows
+    class LocksmithPoolBoxes < Workflow
+      attr_reader :current_box, :table
+
+      def run
+        @ancillary = AncillaryActions.new(@picker, @script)
+        worker_by_location
+        table_by_location
+
+        if !@worker
+          echo "You aren't at a locksmith pool location! Get yourself to an appropriate location and run this script again"
+          exit
+        end
+        @ancillary.deposit_silvers
+        cycle
+      end
+
+      def cycle
+        while true
+          if @picker.settings[:rest_at_state] != 'Never' && @picker.settings[:pick_at_state] != 'Always'
+            rest_for_head_state
+          end
+
+          get_box
+          handle_box ? return_open_box : return_locked_box
+          @ancillary.deposit_silvers
+
+          if @picker.box_count > @picker.settings[:lock_handling][:calibrate_after]
+            @picker.inventory_management.clear_hands
+            @ancillary.calibrate_calipers
+          end
+        end
+      end
+
+      def get_box # obtain a box to work on
+        fput "ask ##{@worker.id} about job"
+        while line = get
+
+          if line =~ Dictionary.worker_wait_regex
+            wait_time = $2 == 'about a minute' ? 70 : 180
+            echo "No boxes available. Waiting #{wait_time} seconds then trying again."
+            sleep wait_time
+            cycle
+          end
+
+          if line =~ Dictionary.worker_box_already_available_regex
+            check_table_for_box
+            return true
+          end
+
+          if line =~ Dictionary.worker_box_regex
+
+            # TODO Do something useful with box data
+            #tip_amount = $1
+            #box_creature = $2
+            #creature_level = $3
+            #box_id = $4
+            #box_type = $5
+
+            #@box_data = {
+              #id: box_id,
+              #type: box_type,
+              #creature: box_creature,
+              #creature_level: creature_level,
+              #tip_amount: tip_amount
+            #}
+            check_table_for_box
+            return true
+          end
+        end
+      end
+
+      def check_table_for_box
+        fput "look on ##{@table.id}"
+        wait_until do
+          @current_box = @table.contents.find{|b| b.name =~ /#{checkname}/ }
+        end
+
+        @current_box
+      end
+
+      def return_open_box # return a succesfully handled box
+        dothistimeout "ask ##{@worker.id} about check", 2, Dictionary.worker_success_regex
+      end
+
+      def return_locked_box # return a box that could not be successfully handled
+        echo "Couldn't get this box, returning to the worker"
+        dothis "ask ##{@worker.id} about check", Dictionary.worker_give_up_regex
+        sleep 1
+        dothis "ask ##{@worker.id} about check", Dictionary.worker_unsuccessful_regex
+      end
+
+      def worker_by_location
+        return 'worker' if Room.current.id == 28937
+        Room.current.tags.find{|t|  t =~ /meta:boxpool:npc:(.*)/ }
+        @worker = GameObj.npcs.find{|n| n.name == $1 }
+      end
+
+      def table_by_location
+        Room.current.tags.find{|t|  t =~ /meta:boxpool:table:(.*)/ }
+        @table = GameObj.loot.find{|n| n.name == $1 }
+      end
+
+      def rest_for_head_state
+        current_head_state_index = Dictionary.head_state_map.index(checkmind)
+        rest_at_head_state_index = Dictionary.head_state_map.index(@picker.settings[:speech_and_misc][:rest_at_state].downcase)
+        pick_at_head_state_index = Dictionary.head_state_map.index(@picker.settings[:speech_and_misc][:pick_at_state].downcase)
+
+        if current_head_state_index >= rest_at_head_state_index
+          echo "Resting until head clears"
+          wait_until do
+            chsi = Dictionary.head_state_map.index(checkmind)
+            chsi <= pick_at_head_state_index
+          end
+        end
+      end
+
+    end
+
+
+  end
+end

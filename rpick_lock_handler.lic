@@ -1,0 +1,263 @@
+module Rpick
+  # This class encapsulates everything to do with lock handling. Measuring, choosing the right pick/tool, picking, popping, relocking, etc.
+  class LockHandler
+    attr_accessor :lock_data
+
+    def initialize(box, picker)
+      @box = box
+      @box_id = box.id
+      @picker = picker
+      @lock_data = {
+        current_caliper_read: nil,
+        current_lock_read: nil
+      }
+      @box_was_relocked = false
+      @current_lockpick = nil
+    end
+
+    def box_in_hand
+      box_in_right = GameObj.right_hand.id == @box_id
+      box_in_left  = GameObj.left_hand.id == @box_id
+      box_in_right ? box_in_right : box_in_left
+    end
+
+    def handle_lock
+      @picker.inventory_manager.clear_hands([box_in_hand])
+      @picker.cast_maintenance_spells_if_needed('locks')
+
+      if @picker.settings[:lock_handling][:always_407] && @picker.knows_407?
+        return handle_lock_with_407
+      end
+
+      if @picker.settings[:lock_handling][:always_wedge_locked] && @picker.can_wedge_boxes? && @picker.has_wedges?
+        echo "Superman no here"
+        result = Rpick::TrapHandler.new(@box, @picker).wedge_box
+        echo result
+        return result
+      end
+
+      measure_lock
+      pick_result = pick_box
+
+      if pick_result
+        if @picker.can_relock_boxes? && !@box_was_relocked && @picker.session_settings[:relock_boxes]
+          relocked = relock_box
+          echo relocked
+          echo @picker.session_settings[:workflow]
+          if relocked && @picker.session_settings[:workflow] == 'worker'
+            @box_was_relocked = true
+            handle_lock
+          end
+
+        end
+        fput "stop 403" if @picker.settings[:lock_handling][:cancel_403] && Spell[403].active?
+        return pick_result
+      end
+
+      unpickable_action = @picker.settings[:lock_handling][:unpickable_box_action]
+      if unpickable_action != 'Return'
+        # Try casting unlock
+        if unpickable_action == 'Unlock (407)' && @picker.knows_407?
+          return handle_lock_with_407
+        end
+
+        # Try wedging if able
+        if (unpickable_action == 'Unlock (407)' && ((!@picker.knows_407? && @picker.can_wedge_boxes?) || unpickable_action == 'Wedge') && @picker.has_wedges?)
+          if Rpick::TrapHandler.new(@box, @picker).wedge_box
+            fput "stop 403" if @picker.settings[:lock_handling][:cancel_403] && Spell[403].active?
+            return true
+          end
+        end
+      end
+
+      fput "stop 403" if @picker.settings[:lock_handling][:cancel_403] && Spell[403].active?
+      return false
+    end
+
+    def relock_box
+      @relocking = true
+      result = pick_box
+      @relocking = false
+      return result
+    end
+
+    def measure_lock
+      @picker.inventory_manager.clear_hands([box_in_hand])
+      return false unless @picker.can_use_calipers? && @picker.has_calipers? && @picker.settings[:lock_handling][:use_calipers]
+      return false if @picker.session_settings[:always_use_vaalin] || @picker.session_settings[:start_with_copper]
+
+      fput "get ##{@picker.inventory[:calipers][:id]}"
+      measure_result = dothis "lm measure ##{@box_id}", Dictionary.caliper_read_regex
+      waitrt?
+
+      if measure_result =~ Dictionary.unsuccessful_caliper_read_regex
+        measure_lock
+      end
+
+      if measure_result =~ Dictionary.successful_caliper_read_regex
+        @lock_data[:current_caliper_read] = $2.to_i
+        echo @lock_data
+        caliper_stow =  "put ##{@picker.inventory[:calipers][:id]} in ##{@picker.inventory[:containers][:locksmith_container][:id]}"
+        dothistimeout caliper_stow, 1, /You put.*#{@picker.inventory[:calipers][:name]}.*"/
+      end
+    end
+
+    def get_best_lockpick(better_than: nil)
+      @current_lockpick = nil # This may have already been done, but
+                              # By the end of this method we'll either have
+                              # a new pick, or won't be able to continue.
+
+      @picker.inventory_manager.clear_hands([box_in_hand])
+
+      if (@picker.settings[:lock_handling][:use_vaalin_when_fried] && ['must rest', 'saturated'].include?(checkmind)) || @picker.session_settings[:always_use_vaalin]
+        this_pick = @picker.inventory_manager.get_lockpick_of_type(:vaalin)
+        unless this_pick
+          echo "All your vaalin lockpicks are broken"
+          return false
+        end
+        @current_lockpick = this_pick
+        fput "get ##{this_pick[:id]}"
+        return true
+      end
+
+      lock_difficulty = @lock_data[:current_lock_read] ? @lock_data[:current_lock_read] : @lock_data[:current_caliper_read]
+
+      if lock_difficulty > @picker.max_lock_attempt
+        echo "This box is too difficult based on your settings: "
+        echo " This box: -#{lock_difficulty} Your max: #{@picker.max_lock_attempt}"
+        return false
+      end
+
+      unless lock_difficulty || better_than
+        best_lockpick = nil
+        if @picker.session_settings[:start_with_copper]
+          best_lockpick = @picker.inventory_manager.get_lockpick_of_type(:copper)
+        else
+          best_lockpick = @picker.inventory_manager.get_lockpick_of_type(:vaalin)
+        end
+
+        unless best_lockpick
+          echo "No lockpick available to handle this lock"
+          return false
+        end
+        @current_lockpick = best_lockpick
+        fput "get ##{best_lockpick[:id]}"
+        return true
+      end
+
+      best_type = []
+      mindex = better_than ? Dictionary.lockpick_modifiers.keys.index(better_than) + 1 : 0
+      Dictionary.lockpick_modifiers.keys[mindex..-1].each do |lockpick_type|
+        break unless best_type.empty?
+        if @picker.can_pick_box?(lockpick_type, lock_difficulty) || (@picker.can_pick_box?(lockpick_type, lock_difficulty, with_lore: true) && @picker.knows_403?)
+          best_type = lockpick_type
+        end
+      end
+
+      best_lockpick = @picker.inventory_manager.get_lockpick_of_type(best_type)
+
+      if !best_lockpick
+        echo "None of your lockpicks are accessible, or this lock is out of your range!"
+        return false
+      end
+
+      @picker.cast_403_if_needed(best_type, lock_difficulty)
+
+      @current_lockpick = best_lockpick
+      fput "get ##{best_lockpick[:id]}"
+      return true
+    end
+
+    def pick_box
+      get_best_lockpick unless @current_lockpick
+      return false unless @current_lockpick # Either all our picks are broken, or our best available pick can't handle the box
+
+      pick_result = nil
+      attempt_roll = nil
+
+      fput @relocking ? "lm relock ##{@box_id}" : @picker.pick_command(@box_id)
+      waitrt?
+
+      while line = get
+        attempt_roll = $1.to_i if line =~ Dictionary.pick_attempt_regex
+
+        if line =~ Dictionary.pick_result_regex
+          pick_result  = line
+          break
+        end
+      end
+
+      if pick_result =~ Regexp.union(Dictionary.lock_already_open_regex, Dictionary.lock_success_regex)
+        fput "put ##{@current_lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"
+        @current_lockpick = nil
+        @picker.box_count += 1
+        return true
+      end
+
+      pick_again = false
+
+      if pick_result =~ Dictionary.lock_read_regex
+        @lock_data[:current_lock_read] = $1.to_i
+        fput "put ##{@current_lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"
+        echo "Got a read on the box, switching to best-suited lockpick"
+        @current_lockpick = nil
+        pick_again = true
+      end
+
+      if pick_result =~ Dictionary.no_lock_read_regex
+        pick_again = true
+      end
+
+      if pick_result =~ Dictionary.pick_bent_regex
+        if @picker.can_repair_lockpicks?
+          fput "lm repair ##{@current_lockpick[:id]}"
+          waitrt?
+        end
+        pick_again = true
+
+      end
+
+      if pick_result =~ Dictionary.pick_broken_regex
+        @picker.inventory_manager.handle_broken_pick(@current_lockpick[:id])
+        fput "put ##{@current_lockpick[:id]} in ##{@picker.inventory[:containers][:broken_lockpick_container][:id]}"
+        pick_again = true
+      end
+
+      if !pick_again
+        echo "Not a success, but not picking again???"
+      else
+        if attempt_roll && @picker.settings[:lock_handling][:lockpick_switch_roll] <= attempt_roll || @current_lockpick[:broken]
+          # Go up a pick size then try again
+          echo "We're gonna need a bigger lockpick!"
+          if @current_lockpick[:type] == :vaalin
+            echo "But we're already at vaalin!"
+            return false if @picker.settings[:lock_handling][:vaalin_switch_roll] <= attempt_roll
+          else
+            fput "put ##{@current_lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"
+            get_best_lockpick(better_than: @current_lockpick[:type])
+          end
+
+          pick_box
+        else
+          pick_box
+        end
+      end
+
+      def handle_lock_with_407
+        return false if @box.name =~ /mithril|enruned/
+
+        @picker.cast_407_if_needed(@box_id, true)
+        while line = get
+          if line =~ Dictionary.box_pop_success_regex
+            return true
+          end
+
+          if line =~ Dictionary.box_pop_failure_regex
+            handle_lock_with_407
+          end
+        end
+      end
+
+    end
+  end
+end

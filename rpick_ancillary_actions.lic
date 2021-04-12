@@ -1,0 +1,295 @@
+module Rpick
+  class AncillaryActions
+    def initialize(picker, script = nil)
+      @picker = picker
+      @script = script
+    end
+
+    # Generate a report about the picker's current status
+    # and present it to the user. Optionally, require confirmation
+    # before kicking off workflow.
+    def preflight_check
+      woundables = %w(
+        arms limbs torso back leftHand
+        rightHand head rightArm abdomen
+        leftEye leftArm chest leftFoot
+        rightFoot rightLeg
+        neck leftLeg nsys rightEye)
+      has_wounds = false
+      session_type = @script.vars.select{|v| %w(worker other ground).include?(v) }.first || 'self'
+      woundables.each{|w| has_wounds = Wounds.send(w) > 0 }
+      respond "#################################################"
+      respond "             RPick Preflight Check          "
+      respond "               Workflow: (#{session_type})  "
+      respond "                                            "
+      respond "                                            "
+      if has_wounds
+      respond " You're currently hurt. that could affect   "
+      respond " your ability to deal with traps and locks  "
+      respond " "
+      end
+      respond " Max Lock You Will Attempt: "
+      respond "         #{@picker.max_lock_attempt}"
+      respond " Max Trap You Will Attempt: "
+      respond "         #{@picker.max_trap_attempt}"
+      respond " Picking Related Inventory:"
+      respond "   Have Containers:"
+      respond "      Toolkit: #{@picker.inventory_manager.has_toolkit?}"
+      respond "      Lockpicks: #{@picker.inventory_manager.has_lockpick_container? }"
+      respond "      Broken Lockpicks: #{@picker.inventory_manager.has_broken_lockpick_container? }"
+      respond "      Dagger Sheath: #{@picker.inventory_manager.has_dagger_sheath? }"
+      respond "      Scarabs: #{@picker.inventory_manager.has_scarab_container? }"
+      respond "      Loot: #{@picker.inventory_manager.has_loot_container? }"
+      if @picker.can_wedge_boxes?
+      respond "      Wedges: #{@picker.inventory_manager.has_broken_lockpick_container? }"
+      end
+      respond "   Putty Remaining: #{@picker.inventory[:putty_count]}"
+      respond "   Cottonballs Remaining: #{@picker.inventory[:cottonball_count]}"
+      respond "   Acid Vials Remaining: #{@picker.inventory[:vial_count]}"
+      if @picker.can_wedge_boxes?
+      respond "   Wedges Remaining: #{@picker.inventory[:wedge_count]}"
+      end
+      respond "   Accessible Dagger: #{@picker.has_dagger?}"
+      if @picker.can_use_calipers?
+      respond "   Accessible Calipers: #{@picker.has_calipers?}"
+      respond " "
+      end
+      respond " Missing Lockpicks:"
+      @picker.inventory_manager.missing_lockpicks.each do |ml|
+        respond "   #{ml}"
+      end
+      respond " Broken Lockpicks:"
+      @picker.inventory_manager.broken_lockpicks.each do |bl|
+        respond "   #{bl[:name]}"
+      end
+      respond "#################################################"
+
+      respond "Do you wish to proceed with these settings?"
+      respond "Type `;send yes` to continue"
+      respond "Type `;send no` to abort"
+      line = get until line.strip =~ /^yes|no$/i
+
+      if line =~ /no/
+        exit
+      end
+    end
+
+    def calibrate_calipers
+      if !@picker.can_calibrate_calipers?
+        echo "Sorry, you aren't able to calibrate calipers yet!"
+        return false
+      end
+
+      this_room   = nil
+      target_room = nil
+
+      if !@picker.can_field_calibrate_calipers?
+        respond '#######################################################'
+        respond '                    Rpick                              '
+        respond "You can't field calibrate calipers yet!"
+        respond "But all is not lost! Type `;send yes` to"
+        respond "travel to the nearest rogue workshop and"
+        respond "calibrate your calipers there! You'll be"
+        respond "brought right back here when you're done!"
+        respond "If you'd prefer to skip calibration, type"
+        respond "`;send no`"
+        respond ""
+        respond "If you would like to avoid seeing this message"
+        respond "in the future, disable the `calibrate_before_startup`"
+        respond "and/or the `calibrate_after` options in settings."
+        respond '#######################################################'
+        line = get until line.strip =~ /^yes|no$/i
+
+        if line =~ /no/
+          return true
+        end
+
+        this_room = Room.current.id
+        target_room = Room.current.find_nearest(Dictionary.guild_workshop_locations)
+
+        start_script('go2', [target_room])
+        wait_while { running? 'go2' }
+        fput "go tool"
+      end
+
+      fput "get ##{@picker.inventory[:calipers][:id]}"
+      calibration_loop
+      fput "put ##{@picker.inventory[:calipers][:id]} in ##{@picker.inventory[:containers][:locksmith_container][:id]}"
+
+      if !@picker.can_field_calibrate_calipers?
+        fput "go out"
+        start_script('go2', [this_room])
+      end
+    end
+
+    def deposit_silvers
+      deposit_silvers_at = @picker.settings[:speech_and_misc][:deposit_silvers_when]
+      enc_index = Dictionary.encumbrance_map.index(checkencumbrance)
+      set_index = Dictionary.encumbrance_map.index(deposit_silvers_at)
+
+      if deposit_silvers_at != 'Never' && enc_index >= set_index
+        this_room = Room.current.id
+        start_script('go2', ['bank'])
+        wait_while { running? 'go2' }
+        fput "deposit all"
+        start_script('go2', [this_room])
+        wait_while { running? 'go2' }
+      end
+    end
+
+    def refill_toolkit
+      this_room = Room.current.id
+      start_script('go2', ['locksmith'])
+      wait_while { running? 'go2' }
+      fput "order"
+      order_number = nil
+
+      while line = get
+        if line =~ /\d+.*\s{2}(\d+).*locksmith\'s/
+          order_number = $1
+        elsif line =~ /(\d+).*locksmith\'s/
+          order_number = $1
+        end
+        break if line =~ /You can APPRAISE/
+      end
+
+      if !order_number
+        echo "This locksmith doesn't sell a toolkit!"
+        exit
+      end
+
+      fput "stow all"
+      fput "order #{order_number}"
+      purchase_result = dothistimeout "buy", 1, /(do not have enough silver|Sold for (.*) silvers)/
+
+      if purchase_result =~ /do not have enough silver/
+        echo "You need money to make this purchase. Get some silvers and try again."
+        exit
+      end
+
+      fput "open ##{GameObj.right_hand.id}"
+      fput "swap"
+      fput "remove ##{@picker.inventory[:containers][:locksmith_container][:id]}"
+      fput "bundle"
+      fput "wear ##{@picker.inventory[:containers][:locksmith_container][:id]}"
+
+
+      trash_container = GameObj.loot.find { |trash| trash.name =~ Dictionary.trash_container_regex }
+
+      if trash_container
+        fput "put ##{GameObj.left_hand.id} in ##{trash_container.id}"
+      else
+        fput "drop ##{GameObj.left_hand.id}"
+      end
+
+      start_script('go2', [this_room])
+      wait_while { running? 'go2' }
+
+      echo "Toolkit topped off"
+    end
+
+    def repair_lockpicks
+      target_room = Room.current.find_nearest(Dictionary.guild_workshop_locations)
+      current_room = Room.current
+
+      start_script('go2', [target_room])
+      wait_while { running? 'go2' }
+      fput "go tool"
+
+      total_price = price_lockpick_repair(@picker.inventory_manager.broken_lockpicks)
+
+      coin_amount = 0
+      res = dothistimeout "wealth", 2, Dictionary.wealth_check_regex
+      coin_amount = $1.gsub(',', '').to_i if res =~ Dictionary.coin_amount_regex
+
+      if coin_amount.to_i < total_price
+        withdraw_money(total_price)
+      end
+
+      @picker.inventory_manager.broken_lockpicks.each do |lockpick|
+        repair_lockpick(lockpick)
+      end
+
+      start_script('go2', [current_room.id])
+    end
+
+    private
+
+    def withdraw_money(amount)
+      this_room = Room.current.id
+      start_script('go2', ['bank'])
+      wait_while { running? 'go2' }
+      fput "deposit all"
+      withdraw_result = dothistimeout "withdraw #{amount} silvers", 1, /(don't seem to have that much|hands you .* silvers)/
+
+      if withdraw_result =~ /don't seem to have that much/
+        echo "You don't have enough money to make this withdraw!"
+        exit
+      end
+
+      start_script('go2', [this_room])
+      wait_while { running? 'go2' }
+    end
+
+    def price_lockpick_repair(lockpicks)
+      fput "read sign"
+      price = 0
+
+      while line = get
+        break if line =~ /\\\-\-\-\-/
+
+        lockpicks.each do |l|
+          type = l[:type].to_s
+
+          if line =~ /#{type} wire .* (\d+) \|/
+            price += $1.to_i
+          end
+
+        end
+      end
+
+      price
+    end
+
+    def repair_lockpick(lockpick)
+      fput "get ##{lockpick[:id]}"
+
+      fput "read sign"
+      while line = get
+        break if line =~ /\\\-\-\-\-/
+        type = lockpick[:type].to_s
+
+        if line =~ /(\d+)\.\).*#{type} wire .* (\d+) \|/
+          item_number = $1
+          fput "order #{item_number}"
+          fput "buy"
+          break
+        end
+      end
+
+      result = dothistimeout "lm repair ##{lockpick[:id]}", 2, Dictionary.lockpick_repair_result_regex
+      waitrt?
+
+      if result =~ Dictionary.lockpick_repair_success_regex
+        fput "put ##{lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"
+      end
+
+      if result =~ Dictionary.lockpick_repair_failure_regex
+        echo "Could not repair #{lockpick[:name]}"
+        fput "put ##{lockpick[:id]} in ##{@picker.inventory[:containers][:broken_lockpick_container][:id]}"
+      end
+    end
+
+    def calibration_loop
+      line = nil
+      matcher = Dictionary.calipers_calibrated_regex
+
+      while line !~ matcher
+        line = fput "lm calibrate ##{@picker.inventory[:calipers][:id]}"
+      end
+    end
+
+  end
+
+end
+
