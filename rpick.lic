@@ -1,16 +1,3 @@
-Script.start('rpick_dictionary')
-Script.start('rpick_inventory_management')
-Script.start('rpick_picker')
-Script.start('rpick_lock_handler')
-Script.start('rpick_trap_handler')
-Script.start('rpick_workflow')
-Script.start('rpick_workflow_ground_boxes')
-Script.start('rpick_workflow_own_boxes')
-Script.start('rpick_workflow_locksmithpool_boxes')
-Script.start('rpick_workflow_customer_boxes')
-Script.start('rpick_ancillary_actions')
-Script.start('rpick_setup')
-
 before_dying {
   %w(rpick_guild_info_parser_hook
      rpick_inventory_parser_hook
@@ -91,4 +78,3 @@ if script.vars[1] == 'calibrate'
 end
 
 kick_off_workflow(picker, script, ancillary)
-

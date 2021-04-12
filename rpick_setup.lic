@@ -7,10 +7,10 @@ module Rpick
 
         Gtk.queue  {
           @builder = Gtk::Builder.new
-          file = "#{$lich_dir}scripts#{File::Separator}#{File::Separator}Rpick.ui"
+          file = "#{$lich_dir}scripts#{File::Separator}#{File::Separator}rpick.ui"
 
           if !File.exist?(file)
-            Script.run('repository', 'download Rpick.ui')
+            Script.run('repository', 'download rpick.ui')
             wait_while { running?('repository') }
           end
 

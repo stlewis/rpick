@@ -1,5 +1,5 @@
 output = ""
-files = [
+[
   'rpick_dictionary',
   'rpick_ancillary_actions',
   'rpick_lock_handler',
@@ -19,4 +19,8 @@ files = [
   output << contents
   output << "\n\n"
 end
-File.write('rpick_unified.lic', output)
+path = File.expand_path(File.dirname(__FILE__) + '/../scripts/rpick.lic')
+ui_path = File.expand_path(File.dirname(__FILE__) + '/../scripts/rpick.ui')
+File.write(path, output)
+File.write(ui_path, File.read('./Rpick.ui'))
+
