@@ -135,66 +135,61 @@ module Rpick
 
     def deposit_silvers
       deposit_silvers_at = @picker.settings[:speech_and_misc][:deposit_silvers_when]
+      return false if deposit_silvers_at == 'Never'
       enc_index = Dictionary.encumbrance_map.index(checkencumbrance)
       set_index = Dictionary.encumbrance_map.index(deposit_silvers_at)
 
-      if deposit_silvers_at != 'Never' && enc_index >= set_index
-        this_room = Room.current.id
-        start_script('go2', ['bank'])
-        wait_while { running? 'go2' }
-        fput "deposit all"
-        start_script('go2', [this_room])
-        wait_while { running? 'go2' }
+      if enc_index >= set_index
+        go_do_and_return('bank') do
+          fput "deposit all"
+        end
       end
+
     end
 
     def refill_toolkit
-      this_room = Room.current.id
-      start_script('go2', ['locksmith'])
-      wait_while { running? 'go2' }
-      fput "order"
-      order_number = nil
+      go_do_and_return('locksmith') do
+        order_number = nil
 
-      while line = get
-        if line =~ /\d+.*\s{2}(\d+).*locksmith\'s/
-          order_number = $1
-        elsif line =~ /(\d+).*locksmith\'s/
-          order_number = $1
+        fput "order"
+        while line = get
+          if line =~ /\d+.*\s{2}(\d+).*locksmith\'s/
+            order_number = $1
+          elsif line =~ /(\d+).*locksmith\'s/
+            order_number = $1
+          end
+          break if line =~ /You can APPRAISE/
         end
-        break if line =~ /You can APPRAISE/
+
+        if !order_number
+          echo "This locksmith doesn't sell a toolkit!"
+          return false
+        end
+
+        fput "stow all"
+        fput "order #{order_number}"
+        purchase_result = dothistimeout "buy", 1, /(do not have enough silver|Sold for (.*) silvers)/
+
+        if purchase_result =~ /do not have enough silver/
+          echo "You need money to make this purchase. Get some silvers and try again."
+          return false
+        end
+
+        fput "open ##{GameObj.right_hand.id}"
+        fput "swap"
+        fput "remove ##{@picker.inventory[:containers][:locksmith_container][:id]}"
+        fput "bundle"
+        fput "wear ##{@picker.inventory[:containers][:locksmith_container][:id]}"
+
+
+        trash_container = GameObj.loot.find { |trash| trash.name =~ Dictionary.trash_container_regex }
+
+        if trash_container
+          fput "put ##{GameObj.left_hand.id} in ##{trash_container.id}"
+        else
+          fput "drop ##{GameObj.left_hand.id}"
+        end
       end
-
-      if !order_number
-        echo "This locksmith doesn't sell a toolkit!"
-        exit
-      end
-
-      fput "stow all"
-      fput "order #{order_number}"
-      purchase_result = dothistimeout "buy", 1, /(do not have enough silver|Sold for (.*) silvers)/
-
-      if purchase_result =~ /do not have enough silver/
-        echo "You need money to make this purchase. Get some silvers and try again."
-        exit
-      end
-
-      fput "open ##{GameObj.right_hand.id}"
-      fput "swap"
-      fput "remove ##{@picker.inventory[:containers][:locksmith_container][:id]}"
-      fput "bundle"
-      fput "wear ##{@picker.inventory[:containers][:locksmith_container][:id]}"
-
-
-      trash_container = GameObj.loot.find { |trash| trash.name =~ Dictionary.trash_container_regex }
-
-      if trash_container
-        fput "put ##{GameObj.left_hand.id} in ##{trash_container.id}"
-      else
-        fput "drop ##{GameObj.left_hand.id}"
-      end
-
-      start_script('go2', [this_room])
-      wait_while { running? 'go2' }
 
       echo "Toolkit topped off"
     end
@@ -210,45 +205,40 @@ module Rpick
       end
 
       target_room = Room.current.find_nearest(Dictionary.guild_workshop_locations)
-      current_room = Room.current
 
-      start_script('go2', [target_room])
-      wait_while { running? 'go2' }
-      fput "go tool"
+      go_do_and_return(target_room) do
+        fput "go tool"
 
-      total_price = price_lockpick_repair(@picker.inventory_manager.broken_lockpicks)
+        total_price = price_lockpick_repair(@picker.inventory_manager.broken_lockpicks)
 
-      coin_amount = 0
-      res = dothistimeout "wealth", 2, Dictionary.wealth_check_regex
-      coin_amount = $1.gsub(',', '').to_i if res =~ Dictionary.coin_amount_regex
+        coin_amount = 0
+        res = dothistimeout "wealth", 2, Dictionary.wealth_check_regex
+        coin_amount = $1.gsub(',', '').to_i if res =~ Dictionary.coin_amount_regex
 
-      if coin_amount.to_i < total_price
-        withdraw_money(total_price)
+        if coin_amount.to_i < total_price
+          return false unless withdraw_money(total_price)
+        end
+
+        @picker.inventory_manager.broken_lockpicks.each do |lockpick|
+          repair_lockpick(lockpick)
+        end
       end
 
-      @picker.inventory_manager.broken_lockpicks.each do |lockpick|
-        repair_lockpick(lockpick)
-      end
-
-      start_script('go2', [current_room.id])
+      echo "Lockpick repair completge"
     end
 
     private
 
     def withdraw_money(amount)
-      this_room = Room.current.id
-      start_script('go2', ['bank'])
-      wait_while { running? 'go2' }
-      fput "deposit all"
-      withdraw_result = dothistimeout "withdraw #{amount} silvers", 1, /(don't seem to have that much|hands you .* silvers)/
+      go_do_and_return('bank') do
+        fput "deposit all"
+        withdraw_result = dothistimeout "withdraw #{amount} silvers", 1, /(don't seem to have that much|hands you .* silvers)/
 
-      if withdraw_result =~ /don't seem to have that much/
-        echo "You don't have enough money to make this withdraw!"
-        exit
+        if withdraw_result =~ /don't seem to have that much/
+          echo "You don't have enough money to make this withdraw!"
+          return false
+        end
       end
-
-      start_script('go2', [this_room])
-      wait_while { running? 'go2' }
     end
 
     def price_lockpick_repair(lockpicks)
@@ -288,13 +278,14 @@ module Rpick
       end
 
       result = dothistimeout "lm repair ##{lockpick[:id]}", 2, Dictionary.lockpick_repair_result_regex
-      waitrt?
 
       if result =~ Dictionary.lockpick_repair_success_regex
+        waitrt?
         fput "put ##{lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"
       end
 
       if result =~ Dictionary.lockpick_repair_failure_regex
+        waitrt?
         echo "Could not repair #{lockpick[:name]}"
         fput "put ##{lockpick[:id]} in ##{@picker.inventory[:containers][:broken_lockpick_container][:id]}"
       end
@@ -325,6 +316,5 @@ module Rpick
     end
 
   end
-
 end
 
