@@ -2,8 +2,8 @@ module Rpick
   # This class encapsulates information about the individual running this script.
   # Things like their lock mastery training, max trap and lock, spell capabilities, etc.
   class Picker
-    attr_reader :inventory_manager, :inventory, :lock_mastery_ranks, :settings, :session_settings
-    attr_accessor :box_count
+    attr_reader :inventory_manager, :inventory, :lock_mastery_ranks, :settings
+    attr_accessor :box_count, :session_settings
 
     def initialize(settings, session_settings = {})
       @settings = settings

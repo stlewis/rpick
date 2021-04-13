@@ -9,16 +9,24 @@ before_dying {
 }
 
 def kick_off_workflow(picker, script, ancillary)
+
+  session_settings = {
+    always_use_vaalin: script.vars.include?('v'),
+    start_with_copper: script.vars.include?('c'),
+    loot_from_ground: script.vars.include?('loot'),
+    relock_boxes: script.vars.include?('relock'),
+    disarm_only: script.vars.include?('disarm'),
+    workflow: script.vars[1..-1].select{|v| %(worker other ground self) }.first || 'self'
+  }
+
+  picker.session_settings = session_settings
+
   picker.inventory_manager.clear_hands
-  #sleep 3
-  ancillary.preflight_check if UserVars.rpick[:speech_and_misc][:perform_preflight_check]
+  ancillary.preflight_check if picker.settings[:speech_and_misc][:perform_preflight_check]
 
-  if UserVars.rpick[:lock_handling][:calibrate_calipers_on_start]
-    ancillary.calibrate_calipers
-  end
+  ancillary.calibrate_calipers if picker.settings[:lock_handling][:calibrate_calipers_on_start]
 
-  workflow_type = script.vars[1..-1].select{|v| v =~ /worker|other|ground/ }.first
-  workflow      = case workflow_type
+  workflow      = case session_settings[:workflow]
                   when 'worker'
                     Rpick::Workflows::LocksmithPoolBoxes.new(picker, script)
                   when 'other'
@@ -33,49 +41,21 @@ def kick_off_workflow(picker, script, ancillary)
 end
 
 # Entry point
-fput "stow all"
-session_settings = {
-  always_use_vaalin: script.vars.include?('v'),
-  start_with_copper: script.vars.include?('c'),
-  loot_from_ground: script.vars.include?('loot'),
-  relock_boxes: script.vars.include?('relock'),
-  disarm_only: script.vars.include?('disarm'),
-  workflow: script.vars[1..-1].select{|v| %(worker other ground) }.first || 'self'
-}
 
-if script.vars[1] == 'setup'
-  Rpick::Setup.run
-  exit
-end
-
-picker = Rpick::Picker.new(UserVars.rpick, session_settings)
+picker = Rpick::Picker.new(UserVars.rpick)
 ancillary = Rpick::AncillaryActions.new(picker, script)
-sleep 2 # FIXME Kill this when everything lives in this file
 
+fput "stow all"
 
-if script.vars[1] == 'buy'
-  sleep 2
-  exit
-end
-
-if script.vars[1] == 'repair'
-  if picker.can_repair_lockpicks?
-    if picker.has_broken_lockpicks?
-      ancillary.repair_lockpicks
-      exit
-    else
-      echo "You don't have any broken lockpicks! Congratulations!"
-      exit
-    end
-  else
-    echo "You do not have sufficient skill to repair lockpicks"
-    exit
-  end
-end
-
-if script.vars[1] == 'calibrate'
+case script.vars[1]
+when 'setup'
+  Rpick::Setup.run
+when 'buy'
+  ancillary.refill_toolkit
+when 'calibrate'
   ancillary.calibrate_calipers
-  exit
+when 'repair'
+  ancillary.repair_lockpicks
+else
+  kick_off_workflow(picker, script, ancillary)
 end
-
-kick_off_workflow(picker, script, ancillary)
