@@ -16,7 +16,7 @@ module Rpick
         rightFoot rightLeg
         neck leftLeg nsys rightEye)
       has_wounds = false
-      session_type = @script.vars.select{|v| %w(worker other ground).include?(v) }.first || 'self'
+      session_type = @picker.session_settings[:workflow]
       woundables.each{|w| has_wounds = Wounds.send(w) > 0 }
       respond "#################################################"
       respond "             RPick Preflight Check          "
@@ -28,39 +28,61 @@ module Rpick
       respond " your ability to deal with traps and locks  "
       respond " "
       end
+      respond " Your settings for this session are:        "
+      if @picker.session_settings[:always_use_vaalin]
+      respond "   Always Using Vaalin                        "
+      end
+      if @picker.session_settings[:start_with_copper]
+      respond "   Starting With Copper                        "
+      end
+      if @picker.session_settings[:loot_from_ground]
+      respond "   Looting From Ground                         "
+      end
+      if @picker.session_settings[:relock_boxes]
+      respond "   Relocking Boxes                         "
+      end
+      if @picker.session_settings[:disarm_only]
+      respond "   Only Disarming                         "
+      end
+      respond " "
       respond " Max Lock You Will Attempt: "
       respond "         #{@picker.max_lock_attempt}"
       respond " Max Trap You Will Attempt: "
       respond "         #{@picker.max_trap_attempt}"
-      respond " Picking Related Inventory:"
-      respond "   Have Containers:"
-      respond "      Toolkit: #{@picker.inventory_manager.has_toolkit?}"
-      respond "      Lockpicks: #{@picker.inventory_manager.has_lockpick_container? }"
-      respond "      Broken Lockpicks: #{@picker.inventory_manager.has_broken_lockpick_container? }"
-      respond "      Dagger Sheath: #{@picker.inventory_manager.has_dagger_sheath? }"
-      respond "      Scarabs: #{@picker.inventory_manager.has_scarab_container? }"
-      respond "      Loot: #{@picker.inventory_manager.has_loot_container? }"
+      respond " Missing Containers:"
+      respond "      Toolkit: #{@picker.inventory[:containers][:locksmith_container]}" unless @picker.inventory_manager.has_toolkit?
+      respond "      Lockpicks: #{@picker.inventory[:containers][:lockpick_container]}}" unless @picker.inventory_manager.has_lockpick_container?
+      respond "      Broken Lockpicks: #{@picker.inventory[:containers][:broken_lockpick_container]}" unless @picker.inventory_manager.has_broken_lockpick_container?
+      respond "      Dagger Sheath: #{@picker.inventory[:containers][:dagger_sheath]}" unless @picker.inventory_manager.has_dagger_sheath?
+      respond "      Scarabs: #{@picker.inventory[:containers][:scarab_container]}" unless @picker.inventory_manager.has_scarab_container?
+      respond "      Loot: #{@picker.inventory[:containers][:scarab_container]}" unless @picker.inventory_manager.has_loot_container?
       if @picker.can_wedge_boxes?
-      respond "      Wedges: #{@picker.inventory_manager.has_broken_lockpick_container? }"
+      respond "      Wedges: #{@picker.inventory[:containers][:wedge_container]}" unless @picker.inventory_manager.has_wedge_container?
       end
+      respond " "
+      respond " Disarming Tools:"
       respond "   Putty Remaining: #{@picker.inventory[:putty_count]}"
       respond "   Cottonballs Remaining: #{@picker.inventory[:cottonball_count]}"
       respond "   Acid Vials Remaining: #{@picker.inventory[:vial_count]}"
       if @picker.can_wedge_boxes?
       respond "   Wedges Remaining: #{@picker.inventory[:wedge_count]}"
       end
-      respond "   Accessible Dagger: #{@picker.has_dagger?}"
+      respond "   Accessible Dagger: #{@picker.inventory[:scale_trap_weapon][:name]}"
       if @picker.can_use_calipers?
-      respond "   Accessible Calipers: #{@picker.has_calipers?}"
+      respond "   Accessible Calipers: #{@picker.inventory[:calipers][:name]}"
       respond " "
       end
-      respond " Missing Lockpicks:"
-      @picker.inventory_manager.missing_lockpicks.each do |ml|
-        respond "   #{ml}"
+      if @picker.inventory_manager.missing_lockpicks.any?
+        respond " Missing Lockpicks:"
+        @picker.inventory_manager.missing_lockpicks.each do |ml|
+          respond "   #{ml}"
+        end
       end
+      if @picker.inventory_manager.broken_lockpicks.any?
       respond " Broken Lockpicks:"
       @picker.inventory_manager.broken_lockpicks.each do |bl|
         respond "   #{bl[:name]}"
+      end
       end
       respond "#################################################"
 
