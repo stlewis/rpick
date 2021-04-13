@@ -32,6 +32,13 @@ module Rpick
       return missing
     end
 
+    def box_in_hand(box_id)
+      box_in_right = GameObj.right_hand.id == box_id ? GameObj.right_hand.id : nil
+      box_in_left  = GameObj.left_hand.id == box_id ? GameObj.left_hand.id : nil
+      holding_box_id = box_in_right ? box_in_right : box_in_left
+      return holding_box_id
+    end
+
     def clear_hands(keep = [])
       right_hand_has = GameObj.right_hand
       left_hand_has  = GameObj.left_hand
@@ -41,6 +48,7 @@ module Rpick
     end
 
     def clear_hand(hand_has, keep)
+      return true unless hand_has.id
       return true if keep.include?(hand_has.id)
 
       if is_dagger?(hand_has)
@@ -117,6 +125,7 @@ module Rpick
     end
 
     def is_lockpick?(thing)
+      echo @inventory[:lockpicks].map{|k, lp| lp.map{|pk| pk[:id] } }.flatten
       @inventory[:lockpicks].map{|k, lp| lp.map{|pk| pk[:id] } }.flatten.include?(thing.id)
     end
 
@@ -221,53 +230,13 @@ module Rpick
         dagger: nil,
         calipers: nil
       }
-      inventory_parser_hook = 'rpick_inventory_parser_hook'
 
+      inventory_parser_hook = 'rpick_inventory_parser_hook'
       inventory_parser = Proc.new do |server_string|
         if server_string =~ /\d+ items displayed/
           DownstreamHook.remove(inventory_parser_hook)
-        elsif server_string =~ /\<a exist\=\"(\d+)\" noun\=\"(.*)\"\>(.*)\<\/a\>/
-          item_id   = $1
-          item_noun = $2
-          item_name = $3
-
-          # Set containers
-          @user_settings[:containers_and_equipment].keys.each do |container_kind|
-            next if container_kind == :auto_bundle_vials
-            if item_name == @user_settings[:containers_and_equipment][container_kind].strip
-              @inventory[:containers][container_kind] = { id: item_id, name: item_name }
-            end
-          end
-
-          # Miscellaneous tools
-          @inventory[:calipers] = { id: item_id, name: item_name } if item_noun == 'calipers'
-          @inventory[:wedge_count] += 1 if item_noun =~ /wedge/
-          @inventory[:dagger]   = { id: item_id, name: item_name } if item_name == @user_settings[:containers_and_equipment][:scale_trap_weapon].strip
-
-          # Lockpicks
-          @inventory[:lockpicks] ||= Dictionary.lockpick_modifiers.keys.reduce({}) do |hsh, lockpick_type|
-            hsh[lockpick_type] = []
-            hsh
-          end
-
-          @user_settings[:lockpicks].each do |lockpick_type, lockpicks|
-            next if lockpick_type == :use_store_bought_lockpicks # Because not actually a lockpick!
-
-            if lockpicks.include?(item_name)
-              @inventory[:lockpicks][lockpick_type] << { id: item_id, name: item_name, type: lockpick_type }
-            end
-          end
-
-          if @user_settings[:lockpicks][:use_store_bought_lockpicks]
-            Dictionary.store_bought_lockpicks.each do |lockpick_type, lockpick_names|
-              if lockpick_names.include?(item_name)
-                lockpick_data = { id: item_id, name: item_name, type: lockpick_type }
-                unless @inventory[:lockpicks][lockpick_type].include?(lockpick_data)
-                  @inventory[:lockpicks][lockpick_type] << lockpick_data
-                end
-              end
-            end
-          end
+        elsif server_string =~ Dictionary.item_link_regex
+          parse_item($1, $2, $3)
           nil
         else
           server_string
@@ -277,8 +246,50 @@ module Rpick
       DownstreamHook.add(inventory_parser_hook, inventory_parser)
       fput "inv full"
       sleep 1
-       #Toolkit contents
+      #Toolkit contents
       parse_toolkit_contents if @inventory[:containers][:locksmith_container]
+      sleep 1
+
+    end
+
+    def parse_item(item_id, item_noun, item_name)
+      # Set containers
+      @user_settings[:containers_and_equipment].keys.each do |container_kind|
+        next if container_kind == :auto_bundle_vials
+        if item_name == @user_settings[:containers_and_equipment][container_kind].strip
+          @inventory[:containers][container_kind] = { id: item_id, name: item_name }
+        end
+      end
+
+      # Miscellaneous tools
+      @inventory[:calipers] = { id: item_id, name: item_name } if item_noun == 'calipers'
+      @inventory[:wedge_count] += 1 if item_noun =~ /wedge/
+      @inventory[:dagger]   = { id: item_id, name: item_name } if item_name == @user_settings[:containers_and_equipment][:scale_trap_weapon].strip
+
+      # Lockpicks
+      @inventory[:lockpicks] ||= Dictionary.lockpick_modifiers.keys.reduce({}) do |hsh, lockpick_type|
+        hsh[lockpick_type] = []
+        hsh
+      end
+
+      @user_settings[:lockpicks].each do |lockpick_type, lockpicks|
+        next if lockpick_type == :use_store_bought_lockpicks # Because not actually a lockpick!
+
+        if lockpicks.include?(item_name)
+          @inventory[:lockpicks][lockpick_type] << { id: item_id, name: item_name, type: lockpick_type }
+        end
+      end
+
+      if @user_settings[:lockpicks][:use_store_bought_lockpicks]
+        Dictionary.store_bought_lockpicks.each do |lockpick_type, lockpick_names|
+          if lockpick_names.include?(item_name)
+            lockpick_data = { id: item_id, name: item_name, type: lockpick_type }
+            unless @inventory[:lockpicks][lockpick_type].include?(lockpick_data)
+              @inventory[:lockpicks][lockpick_type] << lockpick_data
+            end
+          end
+        end
+      end
     end
 
     def parse_toolkit_contents

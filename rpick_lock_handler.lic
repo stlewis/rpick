@@ -16,9 +16,7 @@ module Rpick
     end
 
     def box_in_hand
-      box_in_right = GameObj.right_hand.id == @box_id
-      box_in_left  = GameObj.left_hand.id == @box_id
-      box_in_right ? box_in_right : box_in_left
+      @picker.inventory_manager.box_in_hand(@box_id)
     end
 
     def handle_lock

@@ -60,6 +60,8 @@ For more specialized cases, or if you want to tweak the baseline experience, eac
 
 If you've reached this point, you have enough information to get started, and you don't need to feel obligated to read this section. However, if you've been using &lt;tt&gt;tpick&lt;/tt&gt;, or you've heard about &lt;tt&gt;tpick&lt;/tt&gt; and you're wondering why Rpick exists and why you might consider using it as an alternative, keep reading.
 
+The first thing that you should know is that &lt;tt&gt;tpick&lt;/tt&gt; is &lt;i&gt;awesome&lt;/i&gt;. It's full-featured and works extremely well. I'd go so far as to say that if you're already using &lt;tt&gt;tpick&lt;/tt&gt;, you may find that you don't have a lot of reason to switch to Rpick. That said, &lt;tt&gt;tpick&lt;/tt&gt; is not perfect. Rpick is my attempt to address some of the friction points and issues with &lt;tt&gt;tpick&lt;/tt&gt;, by making a fresh start and seeing what I could come up with.
+
 My primary goal with Rpick was to bring all of the, (considerable), feature set of &lt;tt&gt;tpick&lt;/tt&gt; into a script that was:
 
 1. Easier to configure.
@@ -91,7 +93,7 @@ Speaking of customizing your experience -- spend time around dedicated locksmith
 
 &lt;span size='x-large'&gt;Getting In Touch&lt;/span&gt;
 
-If you've been kind enough to download and try this script, it is quite possible that you'll run in to bugs and missing features that you may find important. If that's the case, please don't hesitate to reach out to me. I can be found on the Gemstone IV Discord as Slyverin, and you can reach me by email at steve@decodingsteve.com</property>
+If you've been kind enough to download and try this script, it is quite possible that you'll run in to bugs and missing features that you may find important. If that's the case, please don't hesitate to reach out to me. I can be found on the Gemstone IV Discord as Slyverin, and you can reach me by email at steve@decodingsteve.com.</property>
   </object>
   <object class="GtkWindow" id="rpick-settings-window">
     <property name="can-focus">False</property>

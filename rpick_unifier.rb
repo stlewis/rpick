@@ -1,6 +1,8 @@
 output = ""
 [
   'rpick_dictionary',
+  'rpick_inventory_management',
+  'rpick_picker',
   'rpick_ancillary_actions',
   'rpick_lock_handler',
   'rpick_trap_handler',
@@ -15,7 +17,27 @@ output = ""
   path = "./#{file}.lic"
 
   contents = File.read(path)
+  header = <<-EOL
+=begin
+    --------------------------------------------------------------------------------
+    Title: Rpick
+    Date: 04/12/2021
+    Author: Slyverin
 
+    About:
+      Locksmithing script
+      More information is available in the Setup UI.
+
+    Use:
+      Run ;rpick setup then look at the Help & About tab.
+
+    Updates :
+      - 04/12/2021 Released (alpha)
+    --------------------------------------------------------------------------------
+=end
+  EOL
+
+  output << header
   output << contents
   output << "\n\n"
 end

@@ -24,7 +24,7 @@ module Rpick
         rods:                /push the two rods together|small metal rods/,
         boomer:              /strange white substance|inside chamber is lined with some unidentifiable substance/,
         clean:               /You discover no traps/,
-        manually_disarmed:   /(bent in opposite directions|free of all obstructions|have been pushed out|seems to be empty now|avoid unwanted contact|sliced through|deflated bladder|bent back slightly|but it appears empty|plugged with something|melted through|may prevent any magical nature|prevent it from igniting|trap was here has been removed|seems to indicate cause for alarm|cotton has been pushed up against the vial|Looking closely into the keyhole of the lock, you spy a small metal housing, which appears to be empty|which has been completely plugged)/,
+        manually_disarmed:   /(bent in opposite directions|free of all obstructions|have been pushed out|seems to be empty now|avoid unwanted contact|sliced through|deflated bladder|bent back slightly|but it appears empty|plugged with something|melted through|may prevent any magical nature|prevent it from igniting|trap was here has been removed|seems to indicate cause for alarm|cotton has been pushed up against the vial|Looking closely into the keyhole of the lock, you spy a small metal housing, which appears to be empty|which has been completely plugged|striking range of the vial)/,
         magically_disarmed:  /(crimson|reddish|deep red) glow/,
         already_open:        /You blink in surprise as though just becoming aware/
       }
@@ -32,6 +32,22 @@ module Rpick
 
     def self.trash_container_regex
       /crate|barrel|wastebarrel|casket|bin|receptacle|basket/i
+    end
+
+    def self.item_link_regex
+      /\<a exist\=\"(\d+)\" noun\=\"(.*)\"\>(.*)\<\/a\>/
+    end
+
+    def self.hand_check_regex
+      /(\<a exist\=\"(\d+)\" noun\=\"(.*)\"\>(.*)\<\/a\>) in your (right|left) hand( and an? (\<a exist\=\"(\d+)\" noun\=\"(.*)\"\>(.*)\<\/a\>) in your left hand)?\./
+    end
+
+    def self.right_hand_regex
+      /(\<a exist\=\"(\d+)\" noun\=\"(.*)\"\>(.*)\<\/a\>) in your right hand/
+    end
+
+    def self.left_hand_regex
+      /(\<a exist\=\"(\d+)\" noun\=\"(.*)\"\>(.*)\<\/a\>) in your left hand/
     end
 
     def self.wealth_check_regex

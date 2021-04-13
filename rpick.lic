@@ -10,7 +10,7 @@ before_dying {
 
 def kick_off_workflow(picker, script, ancillary)
   picker.inventory_manager.clear_hands
-  sleep 3
+  #sleep 3
   ancillary.preflight_check if UserVars.rpick[:speech_and_misc][:perform_preflight_check]
 
   if UserVars.rpick[:lock_handling][:calibrate_calipers_on_start]
@@ -33,6 +33,7 @@ def kick_off_workflow(picker, script, ancillary)
 end
 
 # Entry point
+fput "stow all"
 session_settings = {
   always_use_vaalin: script.vars.include?('v'),
   start_with_copper: script.vars.include?('c'),
