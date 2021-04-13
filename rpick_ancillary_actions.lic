@@ -102,45 +102,34 @@ module Rpick
         return false
       end
 
-      this_room   = nil
-      target_room = nil
+      return calibration_loop if @picker.can_field_calibrate_calipers?
 
-      if !@picker.can_field_calibrate_calipers?
-        respond '#######################################################'
-        respond '                    Rpick                              '
-        respond "You can't field calibrate calipers yet!"
-        respond "But all is not lost! Type `;send yes` to"
-        respond "travel to the nearest rogue workshop and"
-        respond "calibrate your calipers there! You'll be"
-        respond "brought right back here when you're done!"
-        respond "If you'd prefer to skip calibration, type"
-        respond "`;send no`"
-        respond ""
-        respond "If you would like to avoid seeing this message"
-        respond "in the future, disable the `calibrate_before_startup`"
-        respond "and/or the `calibrate_after` options in settings."
-        respond '#######################################################'
-        line = get until line.strip =~ /^yes|no$/i
 
-        if line =~ /no/
-          return true
-        end
+      respond '#######################################################'
+      respond '                    Rpick                              '
+      respond "You can't field calibrate calipers yet!"
+      respond "But all is not lost! Type `;send yes` to"
+      respond "travel to the nearest rogue workshop and"
+      respond "calibrate your calipers there! You'll be"
+      respond "brought right back here when you're done!"
+      respond "If you'd prefer to skip calibration, type"
+      respond "`;send no`"
+      respond ""
+      respond "If you would like to avoid seeing this message"
+      respond "in the future, disable the `calibrate_before_startup`"
+      respond "and/or the `calibrate_after` options in settings."
+      respond '#######################################################'
+      line = get until line.strip =~ /^yes|no$/i
 
-        this_room = Room.current.id
-        target_room = Room.current.find_nearest(Dictionary.guild_workshop_locations)
-
-        start_script('go2', [target_room])
-        wait_while { running? 'go2' }
-        fput "go tool"
+      if line =~ /no/
+        return true
       end
 
-      fput "get ##{@picker.inventory[:calipers][:id]}"
-      calibration_loop
-      fput "put ##{@picker.inventory[:calipers][:id]} in ##{@picker.inventory[:containers][:locksmith_container][:id]}"
+      target_room = Room.current.find_nearest(Dictionary.guild_workshop_locations)
 
-      if !@picker.can_field_calibrate_calipers?
-        fput "go out"
-        start_script('go2', [this_room])
+      go_do_and_return(target_room) do
+        fput "go tool"
+        calibration_loop
       end
     end
 
@@ -211,6 +200,15 @@ module Rpick
     end
 
     def repair_lockpicks
+      unless @picker.can_repair_lockpicks?
+        echo "You don't know how to repair lockpicks!"
+        return false
+      end
+
+      unless @picker.inventory_manager.broken_lockpicks.any?
+        echo "You don't have any broken lockpicks."
+      end
+
       target_room = Room.current.find_nearest(Dictionary.guild_workshop_locations)
       current_room = Room.current
 
@@ -303,12 +301,27 @@ module Rpick
     end
 
     def calibration_loop
-      line = nil
+      fput "get ##{@picker.inventory[:calipers][:id]}"
+
       matcher = Dictionary.calipers_calibrated_regex
+
+      line = nil
 
       while line !~ matcher
         line = fput "lm calibrate ##{@picker.inventory[:calipers][:id]}"
+        waitrt?
       end
+
+      fput "put ##{@picker.inventory[:calipers][:id]} in ##{@picker.inventory[:containers][:locksmith_container][:id]}"
+    end
+
+    def go_do_and_return(target_room_id, &block)
+      current_room_id = Room.current.id
+      start_script('go2', [target_room_id])
+      wait_while { running? 'go2' }
+      yield
+      start_script('go2', [current_room_id])
+      wait_while { running? 'go2' }
     end
 
   end
