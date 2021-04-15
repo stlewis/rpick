@@ -1,3 +1,7 @@
+# This class encapsulates any activities that the script supports that are not
+# directly related to opening boxes. Things like calibrating calipers, repairing
+# lockpicks, depositing/withdrawing silvers from the bank and so on.
+
 module Rpick
   class AncillaryActions
     def initialize(picker, script = nil)
@@ -5,9 +9,6 @@ module Rpick
       @script = script
     end
 
-    # Generate a report about the picker's current status
-    # and present it to the user. Optionally, require confirmation
-    # before kicking off workflow.
     def preflight_check
       woundables = %w(
         arms limbs torso back leftHand
@@ -67,7 +68,7 @@ module Rpick
       if @picker.can_wedge_boxes?
       respond "   Wedges Remaining: #{@picker.inventory[:wedge_count]}"
       end
-      respond "   Accessible Dagger: #{@picker.inventory[:scale_trap_weapon][:name]}"
+      respond "   Accessible Dagger: #{@picker.inventory[:dagger][:name]}"
       if @picker.can_use_calipers?
       respond "   Accessible Calipers: #{@picker.inventory[:calipers][:name]}"
       respond " "
@@ -224,7 +225,7 @@ module Rpick
         end
       end
 
-      echo "Lockpick repair completge"
+      echo "Lockpick repair complete"
     end
 
     private
@@ -251,7 +252,7 @@ module Rpick
         lockpicks.each do |l|
           type = l[:type].to_s
 
-          if line =~ /#{type} wire .* (\d+) \|/
+          if line =~ /#{type} wire .* (\d+) \|/ && !@picker.has_repair_wire?(l[:type])
             price += $1.to_i
           end
 
@@ -263,25 +264,35 @@ module Rpick
 
     def repair_lockpick(lockpick)
       fput "get ##{lockpick[:id]}"
+      wire = nil
 
-      fput "read sign"
-      while line = get
-        break if line =~ /\\\-\-\-\-/
-        type = lockpick[:type].to_s
+      if !@picker.has_repair_wire?(lockpick[:type])
+        fput "read sign"
+        while line = get
+          break if line =~ /\\\-\-\-\-/
+          type = lockpick[:type].to_s
 
-        if line =~ /(\d+)\.\).*#{type} wire .* (\d+) \|/
-          item_number = $1
-          fput "order #{item_number}"
-          fput "buy"
-          break
+          if line =~ /(\d+)\.\).*#{type} wire .* (\d+) \|/
+            item_number = $1
+            fput "order #{item_number}"
+            fput "buy"
+            break
+          end
         end
+      else
+        wire = @picker.inventory_manager.get_wire_of_type(lockpick[:type])
+        fput "get ##{wire[:id]}"
       end
 
       result = dothistimeout "lm repair ##{lockpick[:id]}", 2, Dictionary.lockpick_repair_result_regex
 
       if result =~ Dictionary.lockpick_repair_success_regex
         waitrt?
-        fput "put ##{lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"
+        fput "put ##{lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"\
+
+        if wire
+          @picker.inventory_manager.use_wire(wire)
+        end
       end
 
       if result =~ Dictionary.lockpick_repair_failure_regex

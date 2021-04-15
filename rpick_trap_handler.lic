@@ -31,7 +31,7 @@ module Rpick
     end
 
     def detect_and_disarm
-      @picker.inventory_manager.clear_hands([box_in_hand])
+      @picker.clear_hands([box_in_hand])
       @picker.cast_maintenance_spells_if_needed('traps')
 
       detect_times_setting = @picker.settings[:trap_handling][:detect_count].to_i
@@ -82,11 +82,6 @@ module Rpick
 
         if line =~ Dictionary.trap_read_regex
           @trap_data[:difficulty] = $3.to_i
-
-          echo "We got a trap"
-          echo line
-          echo Dictionary.trap_read_regex
-          echo @trap_data
           break
         end
       end
@@ -121,7 +116,7 @@ module Rpick
       @picker.cast_404_if_needed(@trap_data[:difficulty], @failed_last_attempt)
       waitrt?
 
-      @picker.inventory_manager.clear_hands([box_in_hand, wedge_in_hand])
+      @picker.clear_hands([box_in_hand, wedge_in_hand])
 
       fput "get my wedge" unless wedge_in_hand
 
@@ -138,6 +133,7 @@ module Rpick
             if line =~ /splits away from the casing/
               waitrt?
               fput "put my wedge in ##{@picker.inventory[:containers][:wedge_container][:id]}"
+              @box_is_open = true
               return true
             end
           end
@@ -276,7 +272,7 @@ module Rpick
       if @debug_mode || LockHandler.new(@box, @picker).handle_lock
         @box_is_open = true # The LockHandler won't attempt to repick this box after successful disarm based on this setting.
 
-        @picker.inventory_manager.clear_hands([box_in_hand])
+        @picker.clear_hands([box_in_hand])
 
         fput "get #{@picker.inventory[:dagger]}"
         if standard_disarm

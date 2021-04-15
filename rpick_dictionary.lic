@@ -1,10 +1,13 @@
 # This module encapsulates any information that is static and other classes may
-# need to reference. This includes things like lockpick modifiers, trap detection
-# regex's, lockpick names, workshop location room numbers and so on.
+# need to reference. This includes things like lockpick modifiers, regular expressions
+# for matching against various things in the game, lockpick names, workshop location
+# room numbers and so on. The goal here is to capture all or most of the things that
+# are unlikely to change in a central place where they're easy to reference when needed
+# and simple to modify if the game _does_ change them for some reason
+
 module Rpick
   module Dictionary
 
-    # Regular expressions to match against each trap type.
     def self.trap_detection_regexes
       {
         scarab:              /you spy a (.*) scarab/,
@@ -28,6 +31,14 @@ module Rpick
         magically_disarmed:  /(crimson|reddish|deep red) glow/,
         already_open:        /You blink in surprise as though just becoming aware/
       }
+    end
+
+    def self.box_accepted_regex
+      /You accept (.*)'s offer and are now holding an? (.*)\./
+    end
+
+    def self.box_offered_regex
+      /(.*) offers you an? (.*)\. .* to accept the offer/
     end
 
     def self.trash_container_regex
@@ -58,6 +69,18 @@ module Rpick
       /You have ([\d,\,]+) coins with you/
     end
 
+    def self.putty_remaining_regex
+      /(\d+) pinch(es)? left/
+    end
+
+    def self.cotton_balls_remaining_regex
+      /(\d+) little balls of cotton/
+    end
+
+    def self.vials_remaining_regex
+      /((\d+)|a single) vials? of liquid/
+    end
+
     def self.lockpick_repair_result_regex
       Regexp.union(lockpick_repair_success_regex, lockpick_repair_failure_regex)
     end
@@ -70,17 +93,14 @@ module Rpick
       /form a tight bond/
     end
 
-    # Regular expression to match successful trap disarm
     def self.disarm_success_regex
       /(manage to block|manage to pull|gently nudge the tiny gem|manage to grind down|blowing away in the wind|bend the weak metal|surrounding and protecting|pop them inside|should block whatever|hoping to alter|cannot be pressed together|prevent sparks when|ought to do it|plate covering the lock begins to melt away|carefully remove)/
     end
 
-    # Regular expression to match unsuccessful trap disarm
     def self.disarm_failure_regex
       /(built too tightly|You are not able to disarm the trap)/
     end
 
-    # Regular expression to match tripped traps
     def self.tripped_trap_regex
       /(horribly awry|you feel a tiny prick|sound like shattered crystal|tinkling sound from the lock|explodes in a bright flash|sound of glass shattering)/
     end
@@ -174,7 +194,7 @@ module Rpick
     end
 
     def self.worker_wait_regex
-      /(Why don't you rest your mind for a bit|have any jobs for you at the moment|ask me again (.*) from now|think about this for a few minutes before)/
+      /(Why don't you rest your mind a bit|have any jobs for you at the moment|ask me again (.*)|think about this for a few minutes before)/
     end
 
     def self.calipers_calibrated_regex
@@ -197,7 +217,6 @@ module Rpick
       /(splits away from the casing|takes massive damage|Wedge what\?|Roundtime)/
     end
 
-    # Modifiers for every lockpick type
     def self.lockpick_modifiers
       {
         copper:  1.00,
@@ -221,8 +240,6 @@ module Rpick
       }
     end
 
-    # Names of every treasure-system or store-purchasable lockpick throughout the game,
-    # organized by type.
     def self.store_bought_lockpicks
       {
         copper: [
@@ -385,13 +402,20 @@ module Rpick
       }
     end
 
-    # Room #'s of every rogue guild workshop in the game.
     def self.guild_workshop_locations
-			#target_room = Room.current.find_nearest(guild_workshop_locations)
       [ '17978', '16574', '17960', '17881', '17387', '21187' ]
     end
 
-    # Map of picking tricks and the lock mastery rank at which they are learned.
+    # NOTE This is mostly anecdotal and only here to specify a max lock cap if the user doesn't provide one.
+    def self.theoretical_max_lock
+      1500
+    end
+
+    # NOTE This is mostly anecdotal and only here to specify a max trap cap if the user doesn't provide one.
+    def self.theoretical_max_trap
+      600
+    end
+
     def self.picking_tricks
       {
         spin: 1,
@@ -404,7 +428,6 @@ module Rpick
       }
     end
 
-    # Map of various useful lock mastery skills and the lock mastery rank at which they are learned.
     def self.lock_mastery_skill_map
       {
         use_calipers: 6,

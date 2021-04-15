@@ -47,6 +47,8 @@ module Rpick
       max_trap_setting = @settings[:trap_handling][:max_trap]
       if max_trap_setting < 0
         return max_trap(with_lore: true) + max_trap_setting
+      elsif max_trap_setting == 0
+        return Dictionary.theoretical_max_trap
       else
         return max_trap_setting
       end
@@ -67,6 +69,8 @@ module Rpick
 
       if max_lock_setting < 0
         return max_lock(:vaalin, with_lore: true) + max_lock_setting
+      elsif max_lock_setting == 0
+        return Dictionary.theoretical_max_lock
       else
         return max_lock_setting
       end
@@ -165,13 +169,21 @@ module Rpick
       end
     end
 
+    def clear_hands(keep = [])
+      @inventory_manager.clear_hands(keep)
+    end
+
     def cast_404_if_needed(trap_difficulty, failed_attempt = false)
       if needs_disarm_lore?(trap_difficulty, failed_attempt) && knows_404? && !Spell[404].active?
         if !Spell[404].affordable?
           echo "Waiting for mana"
           wait_while{ !Spell[404].affordable? }
         end
+
         Spell[404].cast
+        sleep 1
+        cast_404_if_needed(trap_difficulty, failed_attempt) unless Spell[404].active?
+
       end
     end
 
@@ -182,6 +194,8 @@ module Rpick
           wait_while{ !Spell[403].affordable? }
         end
         Spell[403].cast
+        sleep 1
+        cast_403_if_needed(lockpick_type, lock_difficulty) unless Spell[403].active?
       end
     end
 
@@ -273,6 +287,9 @@ module Rpick
     end
 
 
+    def has_repair_wire?(type)
+      @inventory_manager.has_repair_wire?(type)
+    end
     def has_calipers?
       @inventory_manager.has_calipers?
     end

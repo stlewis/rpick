@@ -16,12 +16,12 @@ def kick_off_workflow(picker, script, ancillary)
     loot_from_ground: script.vars.include?('loot'),
     relock_boxes: script.vars.include?('relock'),
     disarm_only: script.vars.include?('disarm'),
-    workflow: script.vars[1..-1].select{|v| %(worker other ground self) }.first || 'self'
+    workflow: script.vars[1..-1].select{|v| %(worker other ground self).include?(v) }.first || 'self'
   }
 
   picker.session_settings = session_settings
 
-  picker.inventory_manager.clear_hands
+  picker.clear_hands
   ancillary.preflight_check if picker.settings[:speech_and_misc][:perform_preflight_check]
 
   ancillary.calibrate_calipers if picker.settings[:lock_handling][:calibrate_calipers_on_start]

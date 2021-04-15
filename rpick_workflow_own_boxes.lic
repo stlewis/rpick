@@ -3,14 +3,15 @@ module Rpick
     class OwnBoxes < Workflow
 
       def run
-       check_for_boxes
-       sleep 1
+        @picker.clear_hands
+        check_for_boxes
+        sleep 1
 
-       @boxes.each do |box|
-         @box_id = box[:id]
-         get_box
-         handle_box ? return_open_box : return_locked_box
-       end
+        @boxes.each do |box|
+          @box_id = box[:id]
+          get_box
+          handle_box ? return_open_box : return_locked_box
+        end
       end
 
       # Check inventory for boxes
@@ -38,7 +39,7 @@ module Rpick
 
       # Get one box from the list
       def get_box
-        @picker.inventory_manager.clear_hands
+        @picker.clear_hands
         fput "get ##{@box_id}"
         @current_box = GameObj.right_hand.id == @box_id ? GameObj.right_hand : GameObj.left_hand
       end

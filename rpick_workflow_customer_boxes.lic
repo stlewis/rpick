@@ -2,11 +2,14 @@ module Rpick
   module Workflows
     class CustomerBoxes < Workflow
       def run
-        @picker.inventory_manager.clear_hands
+        @picker.clear_hands
         @picker.say_ready_for_boxes
         while true do
           get_box
           if @current_box
+
+            @picker.clear_hands([@current_box.id])
+
             handle_box ? return_open_box : return_locked_box
           end
         end
@@ -14,16 +17,16 @@ module Rpick
 
       def get_box # obtain a box to work on
         echo "Waiting for customer box"
-        res = dothistimeout "accept", 2, /You accept (.*)'s offer and are now holding an? (.*)\.|You have no offers to accept/
+        res = dothistimeout "accept", 2, Dictionary.box_accepted_regex
 
-        if res =~ /You accept (.*)'s offer and are now holding an? (.*)\./
+        if res =~ Dictionary.box_accepted_regex
           @current_customer = GameObj.pcs.find{|c| c.name == $1 }
           @current_box = GameObj.left_hand && GameObj.left_hand.noun =~ /#{$2}/ ? GameObj.left_hand : GameObj.right_hand
           return true
         end
 
         while line = get
-          if line =~ /(.*) offers you an? (.*)\. .* to accept the offer/
+          if line =~ Dictionary.box_offered_regex
             fput "accept"
             @current_customer = GameObj.pcs.find{|c| c.name == $1 }
             @current_box = GameObj.left_hand && GameObj.left_hand.noun =~ /#{$2}/ ? GameObj.left_hand : GameObj.right_hand

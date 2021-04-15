@@ -2,6 +2,7 @@ module Rpick
   module Workflows
     class GroundBoxes < Workflow
       def run
+        @picker.clear_hands
         boxes = GameObj.loot.select{|l| l.noun =~ Dictionary.box_noun_regex }
         boxes.each do |box|
           @current_box = box

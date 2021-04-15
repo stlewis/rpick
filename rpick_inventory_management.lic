@@ -1,6 +1,6 @@
+# This class handles inventory concerns related to locksmithing. It ensures that the picker
+# has all inventory items necessary for all tasks.
 module Rpick
-  # This class handles inventory concerns related to locksmithing. It ensures that the picker
-  # has all inventory items necessary for all tasks.
   class InventoryManagement
     attr_reader :inventory, :user_settings
 
@@ -10,7 +10,7 @@ module Rpick
       check_for_broken_picks
     end
 
-    def check_toolkit # We should do this before disarming traps
+    def check_toolkit
       parse_toolkit_contents
     end
 
@@ -22,11 +22,12 @@ module Rpick
       missing = []
 
       @inventory[:lockpicks].each do |type, picks|
-        if (@user_settings[:lockpicks][type].nil? || @user_settings[:lockpicks][type].empty?) && !@user_settings[:lockpicks][:use_store_bought_lockpicks]
-          next
-        end
+        if (picks.nil? || picks.empty?)
+          using_store_bought = @user_settings[:lockpicks][:use_store_bought_lockpicks]
 
-        missing << type if picks.empty?
+          missing << type if !using_store_bought && !@user_settings[:lockpicks][type].empty?
+          missing << type if using_store_bought
+        end
       end
 
       return missing
@@ -36,10 +37,12 @@ module Rpick
       box_in_right = GameObj.right_hand.id == box_id ? GameObj.right_hand.id : nil
       box_in_left  = GameObj.left_hand.id == box_id ? GameObj.left_hand.id : nil
       holding_box_id = box_in_right ? box_in_right : box_in_left
+
       return holding_box_id
     end
 
     def clear_hands(keep = [])
+      waitrt?
       right_hand_has = GameObj.right_hand
       left_hand_has  = GameObj.left_hand
 
@@ -51,48 +54,29 @@ module Rpick
       return true unless hand_has.id
       return true if keep.include?(hand_has.id)
 
-      if is_dagger?(hand_has)
+      case hand_has
+      when is_dagger?(hand_has)
+        echo "Stowing dagger"
         fput "put ##{hand_has.id} in ##{@inventory[:containers][:scale_trap_weapon_container][:id]}"
-        return true
-      end
-
-      if is_lockpick?(hand_has)
+      when is_lockpick?(hand_has)
+        echo "Stowing lockpick"
         fput "put ##{hand_has.id} in ##{@inventory[:containers][:lockpick_container][:id]}"
-        return true
-      end
-
-      if is_wedge?(hand_has)
+      when is_wedge?(hand_has)
+        echo "Stowing wedge"
         fput "put ##{hand_has.id} in ##{@inventory[:containers][:wedge_container][:id]}"
-        return true
-      end
-
-      if is_calipers?(hand_has)
+      when is_calipers?(hand_has)
+        echo "Stowing calipers"
         fput "put ##{hand_has.id} in ##{@inventory[:containers][:locksmith_container][:id]}"
-        return true
-      end
-
-      if is_scarab?(hand_has)
+      when is_scarab?(hand_has)
+        echo "Stowing bug"
         fput "put ##{hand_has.id} in ##{@inventory[:containers][:scarab_container][:id]}"
+      when is_vial?(hand_has)
+        echo "Stowing vial"
+        store_vial(hand_has.id)
+      else
+        echo "Stowing generic"
+        fput "stow ##{hand_has.id}"
       end
-
-
-      if is_vial?(hand_has)
-        vial_id = hand_has.id
-        if @user_settings[:containers_and_equipment][:auto_bundle_vials] && @inventory[:vial_count].to_i < 10
-          fput "stow #{vial_id}"
-          fput "stow all"
-          fput "remove ##{@inventory[:containers][:locksmith_container][:id]}"
-          fput "get ##{vial_id}"
-          fput "bundle"
-          fput "wear ##{@inventory[:containers][:locksmith_container][:id]}"
-        else
-          fput "stow ##{vial_id}"
-        end
-
-        return true
-      end
-
-      fput "stow ##{hand_has.id}"
     end
 
     def has_toolkit?
@@ -111,6 +95,10 @@ module Rpick
       !@inventory[:dagger].empty?
     end
 
+    def has_repair_wire?(type)
+      @inventory[:repair_wires][type].any?
+    end
+
     def is_dagger?(thing)
       thing.id == @inventory[:dagger][:id]
     end
@@ -125,7 +113,6 @@ module Rpick
     end
 
     def is_lockpick?(thing)
-      echo @inventory[:lockpicks].map{|k, lp| lp.map{|pk| pk[:id] } }.flatten
       @inventory[:lockpicks].map{|k, lp| lp.map{|pk| pk[:id] } }.flatten.include?(thing.id)
     end
 
@@ -144,6 +131,18 @@ module Rpick
         next_type = Dictionary.lockpick_modifiers.keys[next_type_index]
         get_lockpick_of_type(next_type)
       end
+    end
+
+    def get_wire_of_type(type)
+      if has_repair_wire?(type)
+        return @inventory[:repair_wires][type].first
+      else
+        echo "No wire of that type!"
+      end
+    end
+
+    def use_wire(wire)
+      @inventory[:repair_wires][wire[:type]].delete(wire)
     end
 
     def has_wedges?
@@ -214,6 +213,7 @@ module Rpick
     def parse_inventory
       @inventory = {
         lockpicks: nil,
+        repair_wires: {},
         broken_lockpicks: [],
         containers: {
           loot_container: nil,
@@ -249,7 +249,6 @@ module Rpick
       #Toolkit contents
       parse_toolkit_contents if @inventory[:containers][:locksmith_container]
       sleep 1
-
     end
 
     def parse_item(item_id, item_noun, item_name)
@@ -272,6 +271,18 @@ module Rpick
         hsh
       end
 
+      # Repair wires
+      if item_name =~ /wire/
+        Dictionary.lockpick_modifiers.keys.each do |wire_type|
+          @inventory[:repair_wires][wire_type] ||= []
+
+          if item_name =~ /#{wire_type.to_s} wire/
+            p 'Hi boss'
+            @inventory[:repair_wires][wire_type] << { id: item_id, name: item_name, type: wire_type }
+          end
+        end
+      end
+
       @user_settings[:lockpicks].each do |lockpick_type, lockpicks|
         next if lockpick_type == :use_store_bought_lockpicks # Because not actually a lockpick!
 
@@ -290,21 +301,36 @@ module Rpick
           end
         end
       end
+      pp @inventory
     end
 
     def parse_toolkit_contents
       toolkit_parser_hook = 'rpick_toolkit_parser_hook'
       toolkit_parser = Proc.new do |server_string|
         if server_string =~ /Peering into the (.*), you see/
-          @inventory[:putty_count] = server_string.match(/(\d+) pinches left/)[1].to_i || 0
-          @inventory[:cottonball_count] = server_string.match(/(\d+) little balls of cotton/)[1].to_i || 0
-          @inventory[:vial_count] = server_string.match(/(\d+) vials of liquid/)[1].to_i || 0
+          @inventory[:putty_count] = server_string.match(Dictionary.putty_remaining_regex)[1].to_i || 0
+          @inventory[:cottonball_count] = server_string.match(Dictionary.cotton_balls_remaining_regex)[1].to_i || 0
+          matched_vials = server_string.match(Dictionary.vials_remaining_regex)[1]
+          @inventory[:vial_count] = matched_vials == 'a single' ? 1 : matched_vials.to_i || 0
           DownstreamHook.remove(toolkit_parser_hook)
         end
       end
 
       DownstreamHook.add(toolkit_parser_hook, toolkit_parser)
       fput "look in ##{@inventory[:containers][:locksmith_container][:id]}"
+    end
+
+    def store_vial(vial_id)
+      if @user_settings[:containers_and_equipment][:auto_bundle_vials] && @inventory[:vial_count].to_i < 10
+        fput "stow #{vial_id}"
+        fput "stow all"
+        fput "remove ##{@inventory[:containers][:locksmith_container][:id]}"
+        fput "get ##{vial_id}"
+        fput "bundle"
+        fput "wear ##{@inventory[:containers][:locksmith_container][:id]}"
+      else
+        fput "stow ##{vial_id}"
+      end
     end
 
     def check_for_broken_picks

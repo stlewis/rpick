@@ -18,7 +18,9 @@ module Rpick
 
       def cycle
         while true
-          if @picker.settings[:rest_at_state] != 'Never' && @picker.settings[:pick_at_state] != 'Always'
+          if @picker.settings[:speech_and_misc][:rest_at_state] != 'Never' && @picker.settings[:speech_and_misc][:pick_at_state] != 'Always'
+            echo @picker.settings[:speech_and_misc][:rest_at_state]
+            echo @picker.settings[:speech_and_misc][:pick_at_state]
             rest_for_head_state
           end
 
@@ -27,54 +29,35 @@ module Rpick
           @ancillary.deposit_silvers
 
           if @picker.box_count > @picker.settings[:lock_handling][:calibrate_after]
-            @picker.inventory_management.clear_hands
+            @picker.clear_hands
             @ancillary.calibrate_calipers
           end
         end
       end
 
       def get_box # obtain a box to work on
-        fput "ask ##{@worker.id} about job"
-        while line = get
+        @picker.clear_hands
+        res = dothistimeout "ask ##{@worker.id} about job", 2, Regexp.union(Dictionary.worker_wait_regex, Dictionary.worker_box_regex)
 
-          if line =~ Dictionary.worker_wait_regex
-            wait_time = $2 == 'about a minute' ? 70 : 180
-            echo "No boxes available. Waiting #{wait_time} seconds then trying again."
-            sleep wait_time
-            cycle
-          end
-
-          if line =~ Dictionary.worker_box_already_available_regex
-            check_table_for_box
-            return true
-          end
-
-          if line =~ Dictionary.worker_box_regex
-
-            # TODO Do something useful with box data
-            #tip_amount = $1
-            #box_creature = $2
-            #creature_level = $3
-            #box_id = $4
-            #box_type = $5
-
-            #@box_data = {
-              #id: box_id,
-              #type: box_type,
-              #creature: box_creature,
-              #creature_level: creature_level,
-              #tip_amount: tip_amount
-            #}
-            check_table_for_box
-            return true
-          end
+        if res =~ Dictionary.worker_wait_regex
+          wait_time = $2 =~ 'about a minute' ? 70 : 180
+          echo "No boxes available. Waiting #{wait_time} seconds then trying again."
+          sleep wait_time
+          cycle
         end
+
+        sleep 1
+        check_table_for_box
+        return true
       end
 
       def check_table_for_box
-        fput "look on ##{@table.id}"
-        wait_until do
+        @current_box = nil
+
+        while !@current_box
+          fput "look on ##{@table.id}"
           @current_box = @table.contents.find{|b| b.name =~ /#{checkname}/ }
+          echo @current_box
         end
 
         @current_box
