@@ -46,7 +46,7 @@ You can invoke Rpick to do things other than picking boxes. These "Ancilliary Ac
 
 &lt;b&gt;buy&lt;/b&gt; - This will fill up your locksmith toolkit by purchasing another from the nearest locksmith and bundling it with your current one.
 
-&lt;b&gt;repair&lt;/b&gt; - This will repair any broken lockpicks you currently have, if you have the necessary Lock Mastery ranks to do so.
+&lt;b&gt;repair&lt;/b&gt; - This will repair any broken lockpicks you currently have, if you have the necessary Lock Mastery ranks to do so. The command takes care of the entire process. It will check to see whether or not you already have the necessary repair materials for any broken lockpicks you have. If you need to purchase them, it will retrieve the appropriate amount of silvers, (if necessary), then purchase the materials for you. Finally, it will repair your lockpicks.
 
 &lt;b&gt;calibrate&lt;/b&gt; - This will calibrate your calipers for you, assuming you a.) have calipers and b.) have the necessary Lock Mastery ranks to do so. If you are unable to field calibrate, the script will offer to take you to the nearest rogue workshop to do the calibration there.
 

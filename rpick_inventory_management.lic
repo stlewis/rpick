@@ -277,7 +277,6 @@ module Rpick
           @inventory[:repair_wires][wire_type] ||= []
 
           if item_name =~ /#{wire_type.to_s} wire/
-            p 'Hi boss'
             @inventory[:repair_wires][wire_type] << { id: item_id, name: item_name, type: wire_type }
           end
         end
@@ -301,7 +300,6 @@ module Rpick
           end
         end
       end
-      pp @inventory
     end
 
     def parse_toolkit_contents

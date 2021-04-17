@@ -40,7 +40,7 @@ module Rpick
         res = dothistimeout "ask ##{@worker.id} about job", 2, Regexp.union(Dictionary.worker_wait_regex, Dictionary.worker_box_regex)
 
         if res =~ Dictionary.worker_wait_regex
-          wait_time = $2 =~ 'about a minute' ? 70 : 180
+          wait_time = $2 =~ /about a minute/ ? 70 : 180
           echo "No boxes available. Waiting #{wait_time} seconds then trying again."
           sleep wait_time
           cycle

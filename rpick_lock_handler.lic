@@ -183,7 +183,7 @@ module Rpick
         attempt_roll = $1.to_i if line =~ Dictionary.pick_attempt_regex
 
         if line =~ Dictionary.pick_result_regex
-          pick_result  = line
+          pick_result = line
           break
         end
       end
