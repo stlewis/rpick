@@ -33,6 +33,18 @@ module Rpick
       }
     end
 
+    def self.plinite_detection_regex
+      /It looks like it would be.*\(\-(\d+)\)\.|You struggle to determine the difficulty of the extraction \(somewhere between .* and \-(\d+)\)\.|the core has already been removed|unable to determine the difficulty of the extraction|You promptly discover that the core has already been extracted and merely needs to be PLUCKed/
+    end
+
+    def self.successful_plinite_detection_regex
+      /(It looks like it would be.*\(\-(\d+)|difficulty of the extraction \(somewhere between .* and \-(\d+)\)\.)/
+    end
+
+    def self.plinite_core_removed_regex
+      /You promptly discover that the core has already been removed\./
+    end
+
     def self.box_accepted_regex
       /You accept (.*)'s offer and are now holding an? (.*)\./
     end
@@ -150,11 +162,19 @@ module Rpick
     end
 
     def self.no_lock_read_regex
-      /You are not able to pick the lock|You make a fumbling attempt/
+      /You are not able to pick the lock|You make a fumbling attempt|little too hard and create an ugly new crack|retrieving the core is within your abilities/
+    end
+
+    def self.plinite_unextractable_regex
+      /abilities are probably not sufficient to retrieve/
     end
 
     def self.lock_success_regex
       /You struggle with the .*\.  As you do, you get a sense that the .* has an? .* lock \(.* thief-lingo difficulty ranking\)\.  Then\.\.\.CLICK!  It (opens|locks)!/
+    end
+
+    def self.plinite_success_regex
+      /where it can be easily PLUCKed/
     end
 
     def self.pick_broken_regex

@@ -156,7 +156,11 @@ module Rpick
       Dictionary.picking_tricks.select{|t, rank| lock_mastery_ranks >= rank }.keys
     end
 
-    def pick_command(box_id)
+    def pick_command(box)
+      box_id = box.id
+      if box.noun =~ /plinite/
+        return "extract ##{box_id}"
+      end
       if picking_tricks.any? && @settings[:lock_handling][:picking_trick]
         trick = @settings[:lock_handling][:picking_trick].strip if Dictionary.picking_tricks.include?(@settings[:lock_handling][:picking_trick].strip)
         trick = picking_tricks.sample if @settings[:lock_handling][:picking_trick].strip == 'random'

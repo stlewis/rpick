@@ -17,14 +17,20 @@ module Rpick
 
       def return_open_box # return a succesfully handled box
         if @picker.session_settings[:loot_from_ground]
-          fput "get ##{@current_box[:id]}"
-          fput "open ##{@current_box[:id]}"
-          fput "get coins"
-          waitrt?
+          if @current_box[:name] =~ /plinite/
+            fput "pluck ##{@current_box[:id]}"
+            fput "get ##{@current_box[:id]}"
+            fput "stow all"
+          else
+            fput "get ##{@current_box[:id]}"
+            fput "open ##{@current_box[:id]}"
+            fput "get coins"
+            waitrt?
 
-          fput "empty ##{@current_box[:id]} into ##{@picker.inventory[:containers][:loot_container][:id]}"
-          waitrt?
-          fput "stow ##{@current_box[:id]}"
+            fput "empty ##{@current_box[:id]} into ##{@picker.inventory[:containers][:loot_container][:id]}"
+            waitrt?
+            fput "stow ##{@current_box[:id]}"
+          end
         end
 
         return true # No-op, the box is on the ground

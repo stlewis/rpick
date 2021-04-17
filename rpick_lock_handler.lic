@@ -23,11 +23,11 @@ module Rpick
       @picker.clear_hands([box_in_hand])
       @picker.cast_maintenance_spells_if_needed('locks')
 
-      if @picker.settings[:lock_handling][:always_407] && @picker.knows_407?
+      if @picker.settings[:lock_handling][:always_407] && @picker.knows_407? && @box.noun !~ /plinite/
         return handle_lock_with_407
       end
 
-      if @picker.settings[:lock_handling][:always_wedge_locked] && @picker.can_wedge_boxes? && @picker.has_wedges?
+      if @picker.settings[:lock_handling][:always_wedge_locked] && @picker.can_wedge_boxes? && @picker.has_wedges? && @box.noun !~ /plinite/
         result = Rpick::TrapHandler.new(@box, @picker).wedge_box
         return result
       end
@@ -36,7 +36,7 @@ module Rpick
       pick_result = pick_box
 
       if pick_result
-        if @picker.can_relock_boxes? && !@box_was_relocked && @picker.session_settings[:relock_boxes]
+        if @picker.can_relock_boxes? && !@box_was_relocked && @picker.session_settings[:relock_boxes] && @box.noun !~ /plinite/
           relocked = relock_box
           if relocked && @picker.session_settings[:workflow] == 'worker'
             @box_was_relocked = true
@@ -49,7 +49,7 @@ module Rpick
       end
 
       unpickable_action = @picker.settings[:lock_handling][:unpickable_box_action]
-      if unpickable_action != 'Return'
+      if unpickable_action != 'Return' && @box.noun !~ /plinite/
         # Try casting unlock
         if unpickable_action == 'Unlock (407)' && @picker.knows_407?
           return handle_lock_with_407
@@ -75,8 +75,36 @@ module Rpick
       return result
     end
 
+    def measure_plinite
+      result = dothistimeout "detect ##{@box_id}", 3, Dictionary.plinite_detection_regex
+
+      if result =~ Dictionary.successful_plinite_detection_regex
+        @lock_data[:current_caliper_read] = $1
+        return @lock_data
+      end
+
+      if result =~ Dictionary.plinite_core_removed_regex
+        @box_is_open = true
+        return true
+      end
+
+	if result =~ /It looks like it would be.*\(\-(\d+)\)\./ || result =~ /You struggle to determine the difficulty of the extraction \(somewhere between .* and \-(\d+)\)\./
+		lock = $1.to_i
+	elsif result =~ /You promptly discover that the core has already been removed\./
+		echo "This plinite has already been extracted."
+		tpick_put_stuff_away
+		plinite_already_open = true
+	elsif result =~ /You are unable to determine the difficulty of the extraction\./
+		cannot_determine_plinite_difficulty = true
+		lock = 1000000
+    end
+
     def measure_lock
       @picker.clear_hands([box_in_hand])
+      return measure_plinite if @box.noun =~ /plinite/
+
+      return true if @box_is_open
+
       return false unless @picker.can_use_calipers? && @picker.has_calipers? && @picker.settings[:lock_handling][:use_calipers]
       return false if @picker.session_settings[:always_use_vaalin] || @picker.session_settings[:start_with_copper]
 
@@ -117,8 +145,8 @@ module Rpick
       lock_difficulty = @lock_data[:current_lock_read] ? @lock_data[:current_lock_read] : @lock_data[:current_caliper_read]
 
       if lock_difficulty > @picker.max_lock_attempt
-        echo "This box is too difficult based on your settings: "
-        echo " This box: -#{lock_difficulty} Your max: #{@picker.max_lock_attempt}"
+        echo "This box/plinite is too difficult based on your settings: "
+        echo " This box/plinite: -#{lock_difficulty} Your max: #{@picker.max_lock_attempt}"
         return false
       end
 
@@ -169,6 +197,7 @@ module Rpick
     end
 
     def pick_box
+      return true if @box_is_open
       get_best_lockpick
 
       return false unless @current_lockpick # Either all our picks are broken, or our best available pick can't handle the box
@@ -176,7 +205,7 @@ module Rpick
       pick_result = nil
       attempt_roll = nil
 
-      fput @relocking ? "lm relock ##{@box_id}" : @picker.pick_command(@box_id)
+      fput @relocking ? "lm relock ##{@box_id}" : @picker.pick_command(@box)
       waitrt?
 
       while line = get
@@ -188,7 +217,7 @@ module Rpick
         end
       end
 
-      if pick_result =~ Regexp.union(Dictionary.lock_already_open_regex, Dictionary.lock_success_regex)
+      if pick_result =~ Regexp.union(Dictionary.lock_already_open_regex, Dictionary.lock_success_regex, Dictionary.plinite_success_regex)
         fput "put ##{@current_lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"
         @current_lockpick = nil
         @picker.box_count += 1
@@ -206,6 +235,11 @@ module Rpick
       end
 
       if pick_result =~ Dictionary.no_lock_read_regex
+
+        if pick_result =~ Dictionary.plinite_unextractable_regex
+          return false
+        end
+
         pick_again = true
       end
 

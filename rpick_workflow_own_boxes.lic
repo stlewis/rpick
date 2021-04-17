@@ -46,10 +46,15 @@ module Rpick
 
       # Empty into stow sack, then stow the empty
       def return_open_box
-        fput "open ##{@current_box[:id]}"
-        fput "get coins"
-        fput "empty ##{@current_box[:id]} into ##{@picker.inventory[:containers][:loot_container][:id]}"
-        fput "stow ##{@current_box[:id]}"
+        if @current_box.name =~ /plinite/
+          fput "pluck ##{@current_box[:id]}"
+          fput "stow all"
+        else
+          fput "open ##{@current_box[:id]}"
+          fput "get coins"
+          fput "empty ##{@current_box[:id]} into ##{@picker.inventory[:containers][:loot_container][:id]}"
+          fput "stow ##{@current_box[:id]}"
+        end
       end
 
       # Stow the unopenable box
