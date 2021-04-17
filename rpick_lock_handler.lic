@@ -23,11 +23,11 @@ module Rpick
       @picker.clear_hands([box_in_hand])
       @picker.cast_maintenance_spells_if_needed('locks')
 
-      if @picker.settings[:lock_handling][:always_407] && @picker.knows_407? && @box.noun !~ /plinite/
+      if @picker.settings[:lock_handling][:always_407] && @picker.knows_407? && @box.name !~ /plinite/
         return handle_lock_with_407
       end
 
-      if @picker.settings[:lock_handling][:always_wedge_locked] && @picker.can_wedge_boxes? && @picker.has_wedges? && @box.noun !~ /plinite/
+      if @picker.settings[:lock_handling][:always_wedge_locked] && @picker.can_wedge_boxes? && @picker.has_wedges? && @box.name !~ /plinite/
         result = Rpick::TrapHandler.new(@box, @picker).wedge_box
         return result
       end
@@ -36,7 +36,7 @@ module Rpick
       pick_result = pick_box
 
       if pick_result
-        if @picker.can_relock_boxes? && !@box_was_relocked && @picker.session_settings[:relock_boxes] && @box.noun !~ /plinite/
+        if @picker.can_relock_boxes? && !@box_was_relocked && @picker.session_settings[:relock_boxes] && @box.name !~ /plinite/
           relocked = relock_box
           if relocked && @picker.session_settings[:workflow] == 'worker'
             @box_was_relocked = true
@@ -49,7 +49,7 @@ module Rpick
       end
 
       unpickable_action = @picker.settings[:lock_handling][:unpickable_box_action]
-      if unpickable_action != 'Return' && @box.noun !~ /plinite/
+      if unpickable_action != 'Return' && @box.name !~ /plinite/
         # Try casting unlock
         if unpickable_action == 'Unlock (407)' && @picker.knows_407?
           return handle_lock_with_407
@@ -87,16 +87,6 @@ module Rpick
         @box_is_open = true
         return true
       end
-
-	if result =~ /It looks like it would be.*\(\-(\d+)\)\./ || result =~ /You struggle to determine the difficulty of the extraction \(somewhere between .* and \-(\d+)\)\./
-		lock = $1.to_i
-	elsif result =~ /You promptly discover that the core has already been removed\./
-		echo "This plinite has already been extracted."
-		tpick_put_stuff_away
-		plinite_already_open = true
-	elsif result =~ /You are unable to determine the difficulty of the extraction\./
-		cannot_determine_plinite_difficulty = true
-		lock = 1000000
     end
 
     def measure_lock

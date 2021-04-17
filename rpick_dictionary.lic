@@ -78,7 +78,7 @@ module Rpick
     end
 
     def self.coin_amount_regex
-      /You have ([\d,\,]+) coins with you/
+      /You have ([\d\,]+) coins with you/
     end
 
     def self.putty_remaining_regex
