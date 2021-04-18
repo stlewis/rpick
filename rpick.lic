@@ -45,17 +45,22 @@ end
 picker = Rpick::Picker.new(UserVars.rpick)
 ancillary = Rpick::AncillaryActions.new(picker, script)
 
-fput "stow all"
 
 case script.vars[1]
 when 'setup'
   Rpick::Setup.run
 when 'buy'
+  fput "stow all"
   ancillary.refill_toolkit
 when 'calibrate'
+  fput "stow all"
   ancillary.calibrate_calipers
 when 'repair'
+  fput "stow all"
   ancillary.repair_lockpicks
+when 'debug'
+  ancillary.hand_test
 else
+  fput "stow all"
   kick_off_workflow(picker, script, ancillary)
 end

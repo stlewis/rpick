@@ -114,7 +114,7 @@ module Rpick
       end
     end
 
-    def get_best_lockpick(better_than: nil)
+    def get_best_lockpick
       previous_lockpick = @current_lockpick
       if (@picker.settings[:lock_handling][:use_vaalin_when_fried] && ['must rest', 'saturated'].include?(checkmind)) || @picker.session_settings[:always_use_vaalin]
 
@@ -122,6 +122,7 @@ module Rpick
 
         unless best_lockpick
           echo "All your vaalin lockpicks are broken"
+          @current_lockpick = nil
           return false
         end
 
@@ -137,10 +138,11 @@ module Rpick
       if lock_difficulty > @picker.max_lock_attempt
         echo "This box/plinite is too difficult based on your settings: "
         echo " This box/plinite: -#{lock_difficulty} Your max: #{@picker.max_lock_attempt}"
+        @current_lockpick = nil
         return false
       end
 
-      unless lock_difficulty || better_than
+      unless lock_difficulty || @better_than
         best_lockpick = nil
         if @picker.session_settings[:start_with_copper]
           best_lockpick = @picker.inventory_manager.get_lockpick_of_type(:copper)
@@ -150,6 +152,7 @@ module Rpick
 
         unless best_lockpick
           echo "No lockpick available to handle this lock"
+          @current_lockpick = nil
           return false
         end
 
@@ -161,13 +164,19 @@ module Rpick
       end
 
       best_type = []
-      mindex = better_than ? Dictionary.lockpick_modifiers.keys.index(better_than) + 1 : 0
+      mindex = @better_than ? (Dictionary.lockpick_modifiers.keys.index(@better_than)) + 1 : 0
+
+      echo "We have a pick of type #{@better_than}"
+      we_want = Dictionary.lockpick_modifiers.keys[(Dictionary.lockpick_modifiers.keys.index(@better_than)) + 1]
+      echo "We want a pick of type #{we_want}"
       Dictionary.lockpick_modifiers.keys[mindex..-1].each do |lockpick_type|
         break unless best_type.empty?
         if @picker.can_pick_box?(lockpick_type, lock_difficulty) || (@picker.can_pick_box?(lockpick_type, lock_difficulty, with_lore: true) && @picker.knows_403?)
           best_type = lockpick_type
         end
       end
+
+      @better_than = nil
 
       best_lockpick = @picker.inventory_manager.get_lockpick_of_type(best_type)
 
@@ -216,14 +225,6 @@ module Rpick
 
       pick_again = false
 
-      if pick_result =~ Dictionary.lock_read_regex
-        @lock_data[:current_lock_read] = $1.to_i
-        fput "put ##{@current_lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"
-        echo "Got a read on the box, switching to best-suited lockpick"
-        @current_lockpick = nil
-        pick_again = true
-      end
-
       if pick_result =~ Dictionary.no_lock_read_regex
 
         if pick_result =~ Dictionary.plinite_unextractable_regex
@@ -238,15 +239,20 @@ module Rpick
           fput "lm repair ##{@current_lockpick[:id]}"
           waitrt?
         end
-        pick_again = true
 
+        pick_again = true
       end
 
       if pick_result =~ Dictionary.pick_broken_regex
         @picker.inventory_manager.handle_broken_pick(@current_lockpick[:id])
         echo "Stowing broken pick"
         fput "put ##{@current_lockpick[:id]} in ##{@picker.inventory[:containers][:broken_lockpick_container][:id]}"
-        @current_lockpick = nil
+        pick_again = true
+      end
+
+      if pick_result =~ Dictionary.lock_read_regex
+        @lock_data[:current_lock_read] = $1.to_i
+        echo "Got a read on the box, switching to best-suited lockpick"
         pick_again = true
       end
 
@@ -259,7 +265,7 @@ module Rpick
             return false if @picker.settings[:lock_handling][:vaalin_switch_roll] <= attempt_roll
           else
             echo "Going up to next lockpick size"
-            get_best_lockpick(better_than: @current_lockpick[:type])
+            @better_than = @current_lockpick[:type]
           end
 
           pick_box

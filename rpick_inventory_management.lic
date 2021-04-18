@@ -47,6 +47,7 @@ module Rpick
       left_hand_has  = GameObj.left_hand
 
       clear_hand(right_hand_has, keep) if right_hand_has
+      sleep 1
       clear_hand(left_hand_has, keep) if left_hand_has
     end
 
@@ -54,27 +55,18 @@ module Rpick
       return true unless hand_has.id
       return true if keep.include?(hand_has.id)
 
-      case hand_has
-      when is_dagger?(hand_has)
-        echo "Stowing dagger"
-        fput "put ##{hand_has.id} in ##{@inventory[:containers][:scale_trap_weapon_container][:id]}"
-      when is_lockpick?(hand_has)
-        echo "Stowing lockpick"
-        fput "put ##{hand_has.id} in ##{@inventory[:containers][:lockpick_container][:id]}"
-      when is_wedge?(hand_has)
-        echo "Stowing wedge"
-        fput "put ##{hand_has.id} in ##{@inventory[:containers][:wedge_container][:id]}"
-      when is_calipers?(hand_has)
-        echo "Stowing calipers"
-        fput "put ##{hand_has.id} in ##{@inventory[:containers][:locksmith_container][:id]}"
-      when is_scarab?(hand_has)
-        echo "Stowing bug"
-        fput "put ##{hand_has.id} in ##{@inventory[:containers][:scarab_container][:id]}"
-      when is_vial?(hand_has)
-        echo "Stowing vial"
-        store_vial(hand_has.id)
+      return store_vial if is_vial?(hand_has)
+      chosen_container = nil
+
+      chosen_container = @inventory[:containers][:scale_trap_weapon_container][:id] if is_dagger?(hand_has)
+      chosen_container = @inventory[:containers][:lockpick_container][:id] if is_lockpick?(hand_has)
+      chosen_container = @inventory[:containers][:wedge_container][:id] if is_wedge?(hand_has)
+      chosen_container = @inventory[:containers][:locksmith_container][:id] if is_calipers?(hand_has)
+      chosen_container = @inventory[:containers][:scarab_container][:id] if is_scarab?(hand_has)
+
+      if chosen_container
+        fput "put ##{hand_has.id} in ##{chosen_container}"
       else
-        echo "Stowing generic"
         fput "stow ##{hand_has.id}"
       end
     end
@@ -113,7 +105,10 @@ module Rpick
     end
 
     def is_lockpick?(thing)
-      @inventory[:lockpicks].map{|k, lp| lp.map{|pk| pk[:id] } }.flatten.include?(thing.id)
+      custom_pick_ids = @inventory[:lockpicks].values.map{|picks| picks.map{|pk| pk[:id] } }.flatten
+      store_bought_pick_names = Dictionary.store_bought_lockpicks.values.flatten.uniq
+
+      custom_pick_ids.include?(thing.id) || store_bought_pick_names.include?(thing.name)
     end
 
     # Try to fetch a lockpick corresponding to the requested type.
@@ -319,6 +314,8 @@ module Rpick
     end
 
     def store_vial(vial_id)
+      echo "Attempting to store a vial"
+      echo @user_settings[:containers_and_equipment][:auto_bundle_vials]
       if @user_settings[:containers_and_equipment][:auto_bundle_vials] && @inventory[:vial_count].to_i < 10
         fput "stow #{vial_id}"
         fput "stow all"

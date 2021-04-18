@@ -186,18 +186,11 @@ module Rpick
         return @debug_trap_result
       end
 
-      if disarm_result =~ failure_match
-        @failed_last_attempt = true
-        standard_disarm
-      end
-
       if disarm_result =~ tripped_match
         echo "Trap tripped! Aborting!"
         exit
       end
 
-      echo "FIXME You succeeded, failed, or tripped and we're not sure which. Doing this again to be safe."
-      echo disarm_result
       @failed_last_attempt = true
       standard_disarm
       return false
