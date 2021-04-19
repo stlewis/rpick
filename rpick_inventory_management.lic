@@ -55,7 +55,7 @@ module Rpick
       return true unless hand_has.id
       return true if keep.include?(hand_has.id)
 
-      return store_vial if is_vial?(hand_has)
+      return store_vial(hand_has.id) if is_vial?(hand_has)
       chosen_container = nil
 
       chosen_container = @inventory[:containers][:scale_trap_weapon_container][:id] if is_dagger?(hand_has)

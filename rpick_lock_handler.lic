@@ -176,8 +176,6 @@ module Rpick
         end
       end
 
-      @better_than = nil
-
       best_lockpick = @picker.inventory_manager.get_lockpick_of_type(best_type)
 
       if !best_lockpick
@@ -217,7 +215,6 @@ module Rpick
       end
 
       if pick_result =~ Regexp.union(Dictionary.lock_already_open_regex, Dictionary.lock_success_regex, Dictionary.plinite_success_regex)
-        fput "put ##{@current_lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"
         @current_lockpick = nil
         @picker.box_count += 1
         return true
