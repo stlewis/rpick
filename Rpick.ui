@@ -478,7 +478,7 @@ If you have custom lockpicks you'd like to use, or if you need to override which
                                     <property name="can-focus">False</property>
                                     <property name="left-padding">12</property>
                                     <child>
-                                      <object class="GtkEntry" id="vultitle-lockpicks">
+                                      <object class="GtkEntry" id="vultite-lockpicks">
                                         <property name="visible">True</property>
                                         <property name="can-focus">True</property>
                                         <property name="tooltip-text" translatable="yes">Comma-separated list of your vultite lockpicks.</property>

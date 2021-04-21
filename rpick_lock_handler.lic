@@ -259,7 +259,10 @@ module Rpick
         if attempt_roll && @picker.settings[:lock_handling][:lockpick_switch_roll] <= attempt_roll || @current_lockpick[:broken]
           # Go up a pick size then try again
           if @current_lockpick[:type] == :vaalin
-            return false if @picker.settings[:lock_handling][:vaalin_switch_roll] <= attempt_roll
+            if @picker.settings[:lock_handling][:vaalin_switch_roll] <= attempt_roll
+              echo "Not able to pick this lock and above the vaalin switch threshold"
+              return false
+            end
           else
             echo "Going up to next lockpick size"
             @better_than = @current_lockpick[:type]

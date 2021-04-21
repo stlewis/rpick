@@ -29,6 +29,7 @@ module Rpick
           @ancillary.deposit_silvers
 
           if @picker.box_count > @picker.settings[:lock_handling][:calibrate_after]
+            @picker.box_count = 0
             @picker.clear_hands
             @ancillary.calibrate_calipers
           end
