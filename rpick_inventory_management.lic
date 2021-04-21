@@ -206,6 +206,8 @@ module Rpick
     private
 
     def parse_inventory
+      toggle_echo
+      silence_me
       @inventory = {
         lockpicks: nil,
         repair_wires: {},
@@ -233,6 +235,8 @@ module Rpick
         elsif server_string =~ Dictionary.item_link_regex
           parse_item($1, $2, $3)
           nil
+        elsif server_string =~ /You are currently wearing and carrying\:/
+          nil
         else
           server_string
         end
@@ -244,6 +248,8 @@ module Rpick
       #Toolkit contents
       parse_toolkit_contents if @inventory[:containers][:locksmith_container]
       sleep 1
+      silence_me
+      toggle_echo
     end
 
     def parse_item(item_id, item_noun, item_name)
@@ -331,7 +337,6 @@ module Rpick
     def check_for_broken_picks
       # Go through the list of picks. glance at them. If they appear to be broken,
       # mark them as such.
-
       broken_pick_parser_hook = 'rpick_broken_pick_parser_hook'
       broken_pick_parser = Proc.new do |server_string|
         if server_string =~ /The <a exist\=\"(\d+)\" noun\=\"(.*)\"\>(.*)\<\/a\> appears to be broken/
@@ -345,6 +350,9 @@ module Rpick
         end
       end
 
+      silence_me
+      toggle_echo
+
       DownstreamHook.add(broken_pick_parser_hook, broken_pick_parser)
       @inventory[:lockpicks].each do |k, lockpicks|
         lockpicks.each do |lockpick|
@@ -352,7 +360,9 @@ module Rpick
         end
       end
       DownstreamHook.remove(broken_pick_parser_hook)
+
+      toggle_echo
+      silence_me
     end
   end
 end
-

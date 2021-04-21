@@ -378,8 +378,9 @@ module Rpick
         if server_string =~ /(Click \<a.*\>GLD MENU\<\/a\> for additional commands|You have no guild affiliation)/
           DownstreamHook.remove(info_parser_hook)
         end
+
         if server_string =~ /You have (\d+) ranks in the Lock Mastery skill/
-          @lock_master_ranks = $1.to_i
+          @lock_mastery_ranks = $1.to_i
         end
 
         if server_string =~ /You are a Master of Lock Mastery/
@@ -390,7 +391,12 @@ module Rpick
       end
 
       DownstreamHook.add(info_parser_hook, guild_info_parser)
+
+      toggle_echo
+      silence_me
       fput "gld"
+      silence_me
+      toggle_echo
     end
   end
 end
