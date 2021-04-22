@@ -3,16 +3,14 @@ module Rpick
   # to the use of spells and tools required to successfully disarm. Includes "failsafe" methods to
   # shortcircuit out of range traps, etc.
   class TrapHandler
-    attr_reader :box_id, :trap_data, :box_is_open, :debug_mode
+    attr_reader :box_id, :trap_data, :box_is_open
 
-    def initialize(box, picker, debug_mode = false, debug_trap_result = false)
+    def initialize(box, picker)
       @box = box
       @box_id = box.id
       @picker = picker
       @trap_data = nil
       @has_trap = false
-      @debug_mode = debug_mode
-      @debug_trap_result = debug_trap_result
       @failed_last_attempt = false
     end
 
@@ -120,26 +118,22 @@ module Rpick
 
       fput "get my wedge" unless wedge_in_hand
 
-      if !@debug_mode
-        fput "lm wedge ##{@box_id}"
+      fput "lm wedge ##{@box_id}"
 
-        while line = get
-          if line =~ Dictionary.wedge_result_regex
-            if line =~ /Roundtime/
-              waitrt?
-              return wedge_box
-            end
+      while line = get
+        if line =~ Dictionary.wedge_result_regex
+          if line =~ /Roundtime/
+            waitrt?
+            return wedge_box
+          end
 
-            if line =~ /splits away from the casing/
-              waitrt?
-              fput "put my wedge in ##{@picker.inventory[:containers][:wedge_container][:id]}"
-              @box_is_open = true
-              return true
-            end
+          if line =~ /splits away from the casing/
+            waitrt?
+            fput "put my wedge in ##{@picker.inventory[:containers][:wedge_container][:id]}"
+            @box_is_open = true
+            return true
           end
         end
-      else
-        @debug_trap_result
       end
     end
 
@@ -173,17 +167,12 @@ module Rpick
       tripped_match = Dictionary.tripped_trap_regex
       detector      = Regexp.union(success_match, failure_match, tripped_match)
 
-      if !@debug_mode
-        disarm_result = dothis "disarm ##{@box_id}", detector
-        waitrt?
+      disarm_result = dothis "disarm ##{@box_id}", detector
+      waitrt?
 
-        if disarm_result =~ success_match
-          @failed_last_attempt = false
-          return true
-        end
-      else
-        echo "In debug mode: Standard Trap Disarm for #{@trap_data[:type]}"
-        return @debug_trap_result
+      if disarm_result =~ success_match
+        @failed_last_attempt = false
+        return true
       end
 
       if disarm_result =~ tripped_match
@@ -207,16 +196,11 @@ module Rpick
       current_scarabs = GameObj.loot.map{|l| l.id if l.noun == 'scarab' }
 
       detector      = Regexp.union(success_match, failure_match, tripped_match)
-      if !@debug_mode
-        disarm_result = dothis "disarm ##{@box_id}", detector
-        waitrt?
-      else
-        echo "In debug mode: Scarab Trap Disarm"
-        disarm_result = @debug_trap_result ? 'nudge the scarab free' : 'built too tightly'
-      end
+      disarm_result = dothis "disarm ##{@box_id}", detector
 
       if disarm_result =~ failure_match
         @failed_last_attempt = true
+        waitrt?
         scarab_disarm
       end
 
@@ -227,10 +211,8 @@ module Rpick
 
       if disarm_result =~ success_match
         @picker.say_scarab_on_ground
+        waitrt?
         @failed_last_attempt = false
-        if @debug_mode
-          echo "Scarab isn't real. Simulating disarm"
-        end
         this_scarab = GameObj.loot.select{|l| l.noun == 'scarab' && !current_scarabs.include?(l.id) }.first
         # TODO Think about ways to improve this, especially bailing out if the grab trips the bug
         setting_scarab_disarm_count = @picker.settings[:trap_handling][:scarab_disarm_count]
@@ -256,20 +238,19 @@ module Rpick
     end
 
     def scales_disarm
-      echo "I see a scales trap"
       if !@picker.has_dagger?
         echo "No dagger to disarm this trap with"
         return false # TODO Consider whether or not this should abort the script
       end
 
-      if @debug_mode || LockHandler.new(@box, @picker).handle_lock
+      if LockHandler.new(@box, @picker).handle_lock
         @box_is_open = true # The LockHandler won't attempt to repick this box after successful disarm based on this setting.
 
         @picker.clear_hands([box_in_hand])
 
-        fput "get #{@picker.inventory[:dagger]}"
+        fput "get #{@picker.inventory[:dagger][:id]}"
         if standard_disarm
-          fput "put ##{@picker.inventory[:dagger]} in ##{@picker.inventory[:containers][:scale_trap_weapon_container][:id]}"
+          fput "put ##{@picker.inventory[:dagger][:id]} in ##{@picker.inventory[:containers][:scale_trap_weapon_container][:id]}"
         end
       end
     end
