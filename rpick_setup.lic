@@ -95,6 +95,7 @@ module Rpick
         @builder.get_object('use-calipers').active = settings[:lock_handling][:use_calipers]
         @builder.get_object('calibrate-calipers-on-start').active = settings[:lock_handling][:calibrate_calipers_on_start]
         @builder.get_object('calibrate-after').text = settings[:lock_handling][:calibrate_after].to_s
+        @builder.get_object('calibrate-on-wild-miss').active = settings[:lock_handling][:calibrate_on_wild_miss]
         @builder.get_object('use-403').active = ['Never', 'When Necessary', 'At Threshold', 'Always'].index(settings[:lock_handling][:use_403].strip).to_i
         @builder.get_object('cancel-403').active = settings[:lock_handling][:cancel_403]
         @builder.get_object('always-407').active = settings[:lock_handling][:always_407]
@@ -123,6 +124,52 @@ module Rpick
         @builder.get_object('ready-for-boxes-speech').text = settings[:speech_and_misc][:ready_for_boxes_speech].join('; ').to_s
         @builder.get_object('cant-open-box-speech').text = settings[:speech_and_misc][:cant_open_box_speech].join('; ').to_s
         @builder.get_object('perform-preflight-check').active = settings[:speech_and_misc][:perform_preflight_check]
+        @builder.get_object('remove-armor').text = settings[:speech_and_misc][:remove_armor].to_s
+        @builder.get_object('lockpick-repair-limit').text = settings[:speech_and_misc][:lockpick_repair_limit].to_s
+
+
+        # Load Locksmith Pool Options
+        @builder.get_object('tip-request').text = settings[:locksmith_pool][:tip_request].to_s
+        @builder.get_object('tip-decrement').text = settings[:locksmith_pool][:tip_decrement].to_s
+        @builder.get_object('minimum-tip').text = settings[:locksmith_pool][:minimum_tip].to_s
+        @builder.get_object('max-critter-level').text = settings[:locksmith_pool][:max_critter_level].to_s
+        @builder.get_object('lockpick-by-critter-level').active = settings[:locksmith_pool][:lockpick_by_critter_level]
+        @builder.get_object('copper-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:copper][:min].to_s
+        @builder.get_object('copper-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:copper][:max].to_s
+        @builder.get_object('steel-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:steel][:min].to_s
+        @builder.get_object('steel-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:steel][:max].to_s
+        @builder.get_object('brass-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:brass][:min].to_s
+        @builder.get_object('brass-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:brass][:max].to_s
+        @builder.get_object('steel-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:steel][:min].to_s
+        @builder.get_object('steel-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:steel][:max].to_s
+        @builder.get_object('gold-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:gold][:min].to_s
+        @builder.get_object('gold-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:gold][:max].to_s
+        @builder.get_object('silver-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:silver][:min].to_s
+        @builder.get_object('silver-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:silver][:max].to_s
+        @builder.get_object('mithril-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:mithril][:min].to_s
+        @builder.get_object('mithril-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:mithril][:max].to_s
+        @builder.get_object('ora-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:ora][:min].to_s
+        @builder.get_object('ora-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:ora][:max].to_s
+        @builder.get_object('glaes-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:glaes][:min].to_s
+        @builder.get_object('glaes-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:glaes][:max].to_s
+        @builder.get_object('laje-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:laje][:min].to_s
+        @builder.get_object('laje-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:laje][:max].to_s
+        @builder.get_object('vultite-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:vultite][:min].to_s
+        @builder.get_object('vultite-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:vultite][:max].to_s
+        @builder.get_object('rolaren-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:rolaren][:min].to_s
+        @builder.get_object('rolaren-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:rolaren][:max].to_s
+        @builder.get_object('veniom-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:veniom][:min].to_s
+        @builder.get_object('veniom-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:veniom][:max].to_s
+        @builder.get_object('invar-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:invar][:min].to_s
+        @builder.get_object('invar-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:invar][:max].to_s
+        @builder.get_object('alum-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:alum][:min].to_s
+        @builder.get_object('alum-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:alum][:max].to_s
+        @builder.get_object('golvern-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:golvern][:min].to_s
+        @builder.get_object('golvern-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:golvern][:max].to_s
+        @builder.get_object('kelyn-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:kelyn][:min].to_s
+        @builder.get_object('kelyn-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:kelyn][:max].to_s
+        @builder.get_object('vaalin-min-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:vaalin][:min].to_s
+        @builder.get_object('vaalin-max-critter-level').text = settings[:locksmith_pool][:lockpicks_by_critter_level][:vaalin][:max].to_s
 
         encumbrance_options = [
           'Never',
@@ -155,9 +202,9 @@ module Rpick
           'Becoming Numbed',
           'Numbed'
         ]
-        @builder.get_object('deposit-silvers-when').active = encumbrance_options.index(settings[:speech_and_misc][:deposit_silvers_when]).to_i
-        @builder.get_object('rest-at-state').active = rest_at_options.index(settings[:speech_and_misc][:rest_at_state]).to_i
-        @builder.get_object('pick-at-state').active = pick_at_options.index(settings[:speech_and_misc][:pick_at_state]).to_i
+        @builder.get_object('deposit-silvers-when').active = encumbrance_options.index(settings[:locksmith_pool][:deposit_silvers_when]).to_i
+        @builder.get_object('rest-at-state').active = rest_at_options.index(settings[:locksmith_pool][:rest_at_state]).to_i
+        @builder.get_object('pick-at-state').active = pick_at_options.index(settings[:locksmith_pool][:pick_at_state]).to_i
       end
 
       def save_settings
@@ -167,6 +214,7 @@ module Rpick
         settings[:lock_handling] ||= {}
         settings[:trap_handling] ||= {}
         settings[:speech_and_misc] ||= {}
+        settings[:locksmith_pool] ||= {}
 
         # Save Lockpicks settings
         settings[:lockpicks][:use_store_bought_lockpicks] = @builder.get_object('use-store-bought-lockpicks').active?
@@ -210,6 +258,7 @@ module Rpick
         settings[:lock_handling][:use_calipers] = @builder.get_object('use-calipers').active?
         settings[:lock_handling][:calibrate_calipers_on_start] = @builder.get_object('calibrate-calipers-on-start').active?
         settings[:lock_handling][:calibrate_after] = @builder.get_object('calibrate-after').text.strip.to_i
+        settings[:lock_handling][:calibrate_on_wild_miss] = @builder.get_object('calibrate-on-wild-miss').active?
         settings[:lock_handling][:use_403] = @builder.get_object('use-403').active_text
         settings[:lock_handling][:cancel_403] = @builder.get_object('cancel-403').active?
         settings[:lock_handling][:always_407] = @builder.get_object('always-407').active?
@@ -237,10 +286,76 @@ module Rpick
         settings[:speech_and_misc][:scarab_safe_speech] = @builder.get_object('scarab-safe-speech').text.split(';').map(&:strip)
         settings[:speech_and_misc][:ready_for_boxes_speech] = @builder.get_object('ready-for-boxes-speech').text.split(';').map(&:strip)
         settings[:speech_and_misc][:cant_open_box_speech] = @builder.get_object('cant-open-box-speech').text.split(';').map(&:strip)
-        settings[:speech_and_misc][:deposit_silvers_when] = @builder.get_object('deposit-silvers-when').active_text
         settings[:speech_and_misc][:perform_preflight_check] = @builder.get_object('perform-preflight-check').active?
-        settings[:speech_and_misc][:rest_at_state] = @builder.get_object('rest-at-state').active_text
-        settings[:speech_and_misc][:pick_at_state] = @builder.get_object('pick-at-state').active_text
+        settings[:speech_and_misc][:remove_armor] = @builder.get_object('remove-armor').text.strip
+        settings[:speech_and_misc][:lockpick_repair_limit] = @builder.get_object('lockpick-repair-limit').text.strip.to_i
+
+        # Locksmith Pool Settings
+
+        settings[:locksmith_pool][:tip_request] = @builder.get_object('tip-request').text.to_i
+        settings[:locksmith_pool][:tip_decrement] = @builder.get_object('tip-decrement').text.to_i
+        settings[:locksmith_pool][:minimum_tip] = @builder.get_object('minimum-tip').text.to_i
+        settings[:locksmith_pool][:max_critter_level] = @builder.get_object('max-critter-level').text.to_i
+
+        settings[:locksmith_pool][:lockpick_by_critter_level] = @builder.get_object('lockpick-by-critter-level').active?
+        settings[:locksmith_pool][:lockpicks_by_critter_level] = {
+          copper: {},
+          brass: {},
+          steel: {},
+          gold: {},
+          silver: {},
+          mithril: {},
+          ora: {},
+          glaes: {},
+          laje: {},
+          vultite: {},
+          rolaren: {},
+          veniom: {},
+          invar: {},
+          alum: {},
+          golvern: {},
+          kelyn: {},
+          vaalin: {}
+        }
+
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:copper][:min] = @builder.get_object('copper-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:copper][:max] = @builder.get_object('copper-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:brass][:min] = @builder.get_object('brass-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:brass][:max] = @builder.get_object('brass-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:steel][:min] = @builder.get_object('steel-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:steel][:max] = @builder.get_object('steel-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:gold][:min] = @builder.get_object('gold-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:gold][:max] = @builder.get_object('gold-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:silver][:min] = @builder.get_object('silver-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:silver][:max] = @builder.get_object('silver-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:mithril][:min] = @builder.get_object('mithril-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:mithril][:max] = @builder.get_object('mithril-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:ora][:min] = @builder.get_object('ora-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:ora][:max] = @builder.get_object('ora-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:glaes][:min] = @builder.get_object('glaes-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:glaes][:max] = @builder.get_object('glaes-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:laje][:min] = @builder.get_object('laje-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:laje][:max] = @builder.get_object('laje-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:vultite][:min] = @builder.get_object('vultite-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:vultite][:max] = @builder.get_object('vultite-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:rolaren][:min] = @builder.get_object('rolaren-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:rolaren][:max] = @builder.get_object('rolaren-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:veniom][:min] = @builder.get_object('veniom-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:veniom][:max] = @builder.get_object('veniom-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:invar][:min] = @builder.get_object('invar-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:invar][:max] = @builder.get_object('invar-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:alum][:min] = @builder.get_object('alum-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:alum][:max] = @builder.get_object('alum-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:golvern][:min] = @builder.get_object('golvern-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:golvern][:max] = @builder.get_object('golvern-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:kelyn][:min] = @builder.get_object('kelyn-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:kelyn][:max] = @builder.get_object('kelyn-max-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:vaalin][:min] = @builder.get_object('vaalin-min-critter-level').text.to_i
+        settings[:locksmith_pool][:lockpicks_by_critter_level][:vaalin][:max] = @builder.get_object('vaalin-max-critter-level').text.to_i
+
+        settings[:locksmith_pool][:deposit_silvers_when] = @builder.get_object('deposit-silvers-when').active_text
+        settings[:locksmith_pool][:rest_at_state] = @builder.get_object('rest-at-state').active_text
+        settings[:locksmith_pool][:pick_at_state] = @builder.get_object('pick-at-state').active_text
       end
     end
   end

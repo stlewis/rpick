@@ -42,13 +42,15 @@ end
 
 # Entry point
 
+if script.vars[1] == 'setup'
+  Rpick::Setup.run
+  exit
+end
+
 picker = Rpick::Picker.new(UserVars.rpick)
 ancillary = Rpick::AncillaryActions.new(picker, script)
 
-
 case script.vars[1]
-when 'setup'
-  Rpick::Setup.run
 when 'buy'
   fput "stow all"
   ancillary.refill_toolkit
