@@ -99,7 +99,10 @@ module Rpick
       end
 
       @trap_data[:is_disarmed] = standard_disarm unless %i[scarab sphere scales plate].include?(@trap_data[:type])
-      @trap_data[:is_disarmed] = scarab_disarm if @trap_data[:type] == :scarab
+      if @trap_data[:type] == :scarab
+        @picker.say_scarab_found
+        @trap_data[:is_disarmed] = scarab_disarm
+      end
       @trap_data[:is_disarmed] = scales_disarm if @trap_data[:type] == :scales
       @trap_data[:is_disarmed] = plate_disarm if @trap_data[:type] == :plate
       @trap_data[:is_disarmed] = sphere_disarm if @trap_data[:type] == :sphere
@@ -187,7 +190,6 @@ module Rpick
 
     def scarab_disarm
       @picker.cast_404_if_needed(@trap_data[:difficulty], @failed_last_attempt)
-      @picker.say_scarab_found
 
       success_match = Dictionary.scarab_down_regex
       failure_match = Dictionary.disarm_failure_regex

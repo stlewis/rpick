@@ -214,7 +214,7 @@ module Rpick
     end
 
     def self.worker_wait_regex
-      /(Why don't you rest your mind a bit|have any jobs for you at the moment|ask me again (.*)|think about this for a few minutes before)/
+      /(Why don't you rest your mind a bit|have any jobs for you at the moment|ask me again (.*)|think about this for a few minutes before|wait a bit longer before asking again)/
     end
 
     def self.calipers_calibrated_regex
@@ -223,6 +223,10 @@ module Rpick
 
     def self.worker_give_up_regex
       /If you want to give up, ASK me to CHECK it again within 30 seconds/
+    end
+
+    def self.worker_tip_too_high_regex
+      /We don't have any jobs for you at the moment\.  Why don't you try again later/
     end
 
     def self.scarab_down_regex

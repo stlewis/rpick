@@ -38,7 +38,15 @@ module Rpick
 
       def get_box # obtain a box to work on
         @picker.clear_hands
-        res = dothistimeout "ask ##{@worker.id} about job", 2, Regexp.union(Dictionary.worker_wait_regex, Dictionary.worker_box_regex)
+        ask_command =  @picker.settings[:locksmith_pool][:tip_request] > 0 ? "ask ##{@worker.id} for job minimum #{tip_request}" : "ask ##{@worker.id} for job"
+
+        res = dothistimeout ask_command, 2, Regexp.union(Dictionary.worker_wait_regex, Dictionary.worker_box_regex, Dictionary.worker_tip_too_high_regex)
+
+        if res =~ Dictionary.worker_tip_too_high_regex && @picker.settings[:locksmith_pool][:tip_request] > 0
+          sleep 15
+          decrement_tip_request
+          cycle
+        end
 
         if res =~ Dictionary.worker_wait_regex
           wait_time = $2 =~ /about a minute/ ? 70 : 180
@@ -50,6 +58,20 @@ module Rpick
         sleep 1
         check_table_for_box
         return true
+      end
+
+      def decrement_tip_request
+        decremented = @tip_request - @picker.settings[:locksmith_pool][:tip_decrement]
+        base = @picker.settings[:locksmith_pool][:tip_request]
+        minimum = @picker.settings[:locksmith_pool][:minimum_tip]
+
+        @tip_request = decremented <  minimum ? base : decremented
+      end
+
+      def tip_request
+        base_tip_request = @picker.settings[:locksmith_pool][:tip_request]
+        @tip_request ||= base_tip_request
+        @tip_request
       end
 
       def check_table_for_box
