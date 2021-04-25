@@ -261,10 +261,11 @@ module Rpick
         end
       end
 
-      # Miscellaneous tools
+      # Miscellaneous tools and armor
       @inventory[:calipers] = { id: item_id, name: item_name } if item_noun == 'calipers'
       @inventory[:wedge_count] += 1 if item_noun =~ /wedge/
       @inventory[:dagger]   = { id: item_id, name: item_name } if item_name == @user_settings[:containers_and_equipment][:scale_trap_weapon].strip
+      @inventory[:worn_armor] = { id: item_id, name: item_name } if item_name == @user_settings[:speech_and_misc][:remove_armor]
 
       # Lockpicks
       @inventory[:lockpicks] ||= Dictionary.lockpick_modifiers.keys.reduce({}) do |hsh, lockpick_type|

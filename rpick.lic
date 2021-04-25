@@ -6,6 +6,12 @@ before_dying {
      rpick_box_parser_hook).each do |h|
     DownstreamHook.remove(h)
   end
+
+  if @picker && @picker.settings[:speech_and_misc][:remove_armor] && @armor_removed
+    waitrt?
+    fput "get ##{@picker.inventory[:worn_armor][:id]}"
+    fput "wear ##{@picker.inventory[:worn_armor][:id]}"
+  end
 }
 
 def kick_off_workflow(picker, script, ancillary)
@@ -23,6 +29,14 @@ def kick_off_workflow(picker, script, ancillary)
 
   picker.clear_hands
   ancillary.preflight_check if picker.settings[:speech_and_misc][:perform_preflight_check]
+
+  if picker.settings[:speech_and_misc][:remove_armor]
+    fput "remove ##{picker.inventory[:worn_armor][:id]}"
+    waitrt?
+    fput "stow ##{picker.inventory[:worn_armor][:id]}"
+    @armor_removed = true
+  end
+
 
   ancillary.calibrate_calipers if picker.settings[:lock_handling][:calibrate_calipers_on_start]
 
@@ -47,22 +61,22 @@ if script.vars[1] == 'setup'
   exit
 end
 
-picker = Rpick::Picker.new(UserVars.rpick)
-ancillary = Rpick::AncillaryActions.new(picker, script)
+@picker = Rpick::Picker.new(UserVars.rpick)
+@ancillary = Rpick::AncillaryActions.new(@picker, script)
 
 case script.vars[1]
 when 'buy'
   fput "stow all"
-  ancillary.refill_toolkit
+  @ancillary.refill_toolkit
 when 'calibrate'
   fput "stow all"
-  ancillary.calibrate_calipers
+  @ancillary.calibrate_calipers
 when 'repair'
   fput "stow all"
-  ancillary.repair_lockpicks
+  @ancillary.repair_lockpicks
 when 'debug'
-  ancillary.hand_test
+  @ancillary.hand_test
 else
   fput "stow all"
-  kick_off_workflow(picker, script, ancillary)
+  kick_off_workflow(@picker, script, @ancillary)
 end

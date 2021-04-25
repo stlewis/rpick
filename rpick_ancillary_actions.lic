@@ -45,6 +45,9 @@ module Rpick
       if @picker.session_settings[:disarm_only]
       respond "   Only Disarming                         "
       end
+      if @picker.settings[:speech_and_misc][:remove_armor]
+      respond " Removing Armor To Pick"
+      end
       respond " "
       respond " Max Lock You Will Attempt: "
       respond "         #{@picker.max_lock_attempt}"
