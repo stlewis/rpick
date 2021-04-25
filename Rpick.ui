@@ -2769,7 +2769,7 @@ For instance, if &lt;b&gt;Tip Request&lt;/b&gt; is set to 1000, and &lt;b&gt;Tip
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkFrame" id="rest-at-state">
+                                  <object class="GtkFrame">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="label_xalign">0</property>
@@ -2780,7 +2780,7 @@ For instance, if &lt;b&gt;Tip Request&lt;/b&gt; is set to 1000, and &lt;b&gt;Tip
                                         <property name="can_focus">False</property>
                                         <property name="left_padding">12</property>
                                         <child>
-                                          <object class="GtkComboBoxText" id="rest-at-state1">
+                                          <object class="GtkComboBoxText" id="rest-at-state">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="tooltip_markup" translatable="yes">If set to anything other than &lt;b&gt;Never&lt;/b&gt;, you will pause picking if your mind reaches the indicated state. This setting only applies to picking in the locksmith pool.</property>
