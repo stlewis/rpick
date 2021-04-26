@@ -10,7 +10,8 @@ module Rpick
         @boxes.each do |box|
           @box_id = box[:id]
           get_box
-          handle_box ? return_open_box : return_locked_box
+
+          handle_box && !@picker.session_settings[:disarm_only]  ? return_open_box : return_locked_box
         end
       end
 
