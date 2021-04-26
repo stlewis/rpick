@@ -3,9 +3,10 @@ module Rpick
   # Things like their lock mastery training, max trap and lock, spell capabilities, etc.
   class Picker
     attr_reader :inventory_manager, :inventory, :lock_mastery_ranks, :settings
-    attr_accessor :box_count, :session_settings
+    attr_accessor :box_count, :session_settings, :wild_measure_miss
 
     def initialize(settings, session_settings = {})
+      @wild_measure_miss = false
       @settings = settings
       @session_settings = session_settings
       parse_guild_info

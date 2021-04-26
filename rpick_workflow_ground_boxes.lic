@@ -2,12 +2,18 @@ module Rpick
   module Workflows
     class GroundBoxes < Workflow
       def run
+        @ancillary = AncillaryActions.new(@picker, @script)
         @picker.clear_hands
         boxes = GameObj.loot.select{|l| l.noun =~ Dictionary.box_noun_regex }
         boxes.each do |box|
           @current_box = box
           get_box
           handle_box && !@picker.session_settings[:disarm_only]  ? return_open_box : return_locked_box
+
+          if @picker.wild_measure_miss && @picker.settings[:lock_handling][:calibrate_on_wild_miss]
+            echo "Badly mis-measured the last lock. Calibrating calipers"
+            @ancillary.calibrate_calipers
+          end
         end
       end
 

@@ -1,7 +1,7 @@
 module Rpick
   # This class encapsulates everything to do with lock handling. Measuring, choosing the right pick/tool, picking, popping, relocking, etc.
   class LockHandler
-    attr_accessor :lock_data
+    attr_accessor :lock_data, :wild_measure_miss
 
     def initialize(box, picker, box_info = nil)
       @box = box
@@ -253,6 +253,14 @@ module Rpick
       end
 
       if pick_result =~ Regexp.union(Dictionary.lock_already_open_regex, Dictionary.lock_success_regex, Dictionary.plinite_success_regex)
+
+        if pick_result =~ Dictionary.lock_success_regex
+          actual_lock_strength = $1.to_i
+          caliper_lock_read = @lock_data[:current_caliper_read].to_i > 0 ? @lock_data[:current_caliper_read] : nil
+          @picker.wild_measure_miss = (caliper_lock_read - actual_lock_strength ).abs >= 50
+        end
+
+
         @current_lockpick = nil
         @picker.box_count += 1
         return true

@@ -223,6 +223,7 @@ module Rpick
           waitrt?
         end
 
+        waitrt?
         fput "get ##{this_scarab.id}"
         fput "put scarab in ##{@picker.inventory[:containers][:scarab_container][:id]}"
         @picker.say_scarab_safe

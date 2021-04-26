@@ -29,6 +29,13 @@ module Rpick
           max_critter_level = @picker.settings[:locksmith_pool][:max_critter_level]
           will_handle_box = false if  max_critter_level > 0 && max_critter_level < @box_info[:critter_level].to_i
           will_handle_box && handle_box ? return_open_box : return_locked_box
+
+          if @picker.wild_measure_miss && @picker.settings[:lock_handling][:calibrate_on_wild_miss]
+            echo "Badly mis-measured the last lock. Calibrating calipers"
+            @ancillary.calibrate_calipers
+          end
+
+
           @ancillary.deposit_silvers
 
           if @picker.box_count > @picker.settings[:lock_handling][:calibrate_after]
@@ -43,12 +50,17 @@ module Rpick
         @picker.clear_hands
         ask_command =  @picker.settings[:locksmith_pool][:tip_request] > 0 ? "ask ##{@worker.id} for job minimum #{tip_request}" : "ask ##{@worker.id} for job"
 
-        res = dothistimeout ask_command, 2, Regexp.union(Dictionary.worker_wait_regex, Dictionary.worker_box_regex, Dictionary.worker_tip_too_high_regex)
+        res = dothistimeout ask_command, 2, Regexp.union(Dictionary.worker_wait_regex, Dictionary.worker_box_regex, Dictionary.worker_tip_too_high_regex, Dictionary.worker_box_already_available_regex)
 
         if res =~ Dictionary.worker_tip_too_high_regex && @picker.settings[:locksmith_pool][:tip_request] > 0
           sleep 15
           decrement_tip_request
           cycle
+        end
+
+        if res =~ Dictionary.worker_box_already_available_regex
+          check_table_for_box
+          return true
         end
 
         if res =~ Dictionary.worker_wait_regex

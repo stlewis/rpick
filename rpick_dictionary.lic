@@ -170,7 +170,7 @@ module Rpick
     end
 
     def self.lock_success_regex
-      /You struggle with the .*\.  As you do, you get a sense that the .* has an? .* lock \(.* thief-lingo difficulty ranking\)\.  Then\.\.\.CLICK!  It (opens|locks)!/
+      /You struggle with the .*\.  As you do, you get a sense that the .* has an? .* lock \(-(.*) thief-lingo difficulty ranking\)\.  Then\.\.\.CLICK!  It (opens|locks)!/
     end
 
     def self.plinite_success_regex

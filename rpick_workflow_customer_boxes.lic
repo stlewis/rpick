@@ -2,6 +2,7 @@ module Rpick
   module Workflows
     class CustomerBoxes < Workflow
       def run
+        @ancillary = AncillaryActions.new(@picker, @script)
         @picker.clear_hands
         @picker.say_ready_for_boxes
         while true do
@@ -11,6 +12,11 @@ module Rpick
             @picker.clear_hands([@current_box.id])
 
             handle_box ? return_open_box : return_locked_box
+
+            if @picker.wild_measure_miss && @picker.settings[:lock_handling][:calibrate_on_wild_miss]
+              echo "Badly mis-measured the last lock. Calibrating calipers"
+              @ancillary.calibrate_calipers
+            end
           end
         end
       end

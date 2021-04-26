@@ -30,7 +30,7 @@ def kick_off_workflow(picker, script, ancillary)
   picker.clear_hands
   ancillary.preflight_check if picker.settings[:speech_and_misc][:perform_preflight_check]
 
-  if picker.settings[:speech_and_misc][:remove_armor]
+  if picker.settings[:speech_and_misc][:remove_armor] && picker.inventory[:worn_armor].any?
     fput "remove ##{picker.inventory[:worn_armor][:id]}"
     waitrt?
     fput "stow ##{picker.inventory[:worn_armor][:id]}"
