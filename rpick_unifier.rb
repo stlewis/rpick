@@ -37,7 +37,7 @@ output << header
   'rpick_setup',
   'rpick'
 ].each do |file|
-  path = "./#{file}.lic"
+  path = "./#{file}.rb"
 
   contents = File.read(path)
   output << contents
