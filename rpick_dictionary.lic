@@ -241,6 +241,10 @@ module Rpick
       /(splits away from the casing|takes massive damage|Wedge what\?|Roundtime)/
     end
 
+    def self.wild_measure_miss_threshold
+      50
+    end
+
     def self.lockpick_modifiers
       {
         copper:  1.00,

@@ -29,8 +29,6 @@ module Rpick
           return true if @picker.session_settings[:disarm_only]
 
           pick_result = trap_handler.box_is_open? ? true : lock_handler.handle_lock
-          if lock_handler.wild_measure_miss
-          end
           return pick_result
         else
           return false

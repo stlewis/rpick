@@ -220,12 +220,16 @@ module Rpick
         coin_amount = $1.gsub(',', '').to_i if res =~ Dictionary.coin_amount_regex
 
         if coin_amount.to_i < total_price
+
+          fput "out"
           return false unless withdraw_money(total_price)
+          fput "go tool"
         end
 
         @picker.inventory_manager.broken_lockpicks.each do |lockpick|
           repair_lockpick(lockpick)
         end
+        fput "out"
       end
 
       echo "Lockpick repair complete"
