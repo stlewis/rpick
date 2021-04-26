@@ -3,9 +3,10 @@ module Rpick
   class LockHandler
     attr_accessor :lock_data
 
-    def initialize(box, picker)
+    def initialize(box, picker, box_info = nil)
       @box = box
       @box_id = box.id
+      @box_info = box_info
       @picker = picker
       @lock_data = {
         current_caliper_read: nil,
@@ -115,6 +116,7 @@ module Rpick
     end
 
     def get_best_lockpick
+      return get_lockpick_by_critter_level if @box_info && @picker.settings[:locksmith_pool][:lockpick_by_critter_level]
       previous_lockpick = @current_lockpick
       if (@picker.settings[:lock_handling][:use_vaalin_when_fried] && ['must rest', 'saturated'].include?(checkmind)) || @picker.session_settings[:always_use_vaalin]
 
@@ -190,6 +192,42 @@ module Rpick
       return true if @current_lockpick == previous_lockpick
       @picker.clear_hands([box_in_hand])
       fput "get ##{best_lockpick[:id]}"
+      return true
+    end
+
+    def get_lockpick_by_critter_level
+
+      critter_level = @box_info[:critter_level].to_i
+      mindex = @better_than ? (Dictionary.lockpick_modifiers.keys.index(@better_than)) + 1 : 0
+      best_type = nil
+
+      Dictionary.lockpick_modifiers.keys[mindex..-1].each do |lockpick_type|
+        break unless best_type.empty?
+        min = settings[:locksmith_pool][:lockpicks_by_critter_level][lockpick_type][:min]
+
+        min = 0 if mindex > 0 # If we know we've skipped past picks that meet the bottom end criteria, just care about top end.
+
+        max = settings[:locksmith_pool][:lockpicks_by_critter_level][lockpick_type][:max]
+        best_type = lockpick_type if critter_level.between?(min, max)
+      end
+
+      best_type ||= :vaalin
+      best_lockpick = @picker.inventory_manager.get_lockpick_of_type(best_type)
+
+      if !best_lockpick
+        echo "None of your lockpicks are accessible, or this lock is out of your range!"
+        @current_lockpick = nil
+        return false
+      end
+
+      @picker.cast_403_if_needed(best_type, lock_difficulty)
+
+      @current_lockpick = best_lockpick
+      return true if @current_lockpick == previous_lockpick
+
+      @picker.clear_hands([box_in_hand])
+      fput "get ##{best_lockpick[:id]}"
+
       return true
     end
 

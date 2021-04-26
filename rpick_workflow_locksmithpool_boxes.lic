@@ -25,7 +25,10 @@ module Rpick
           end
 
           get_box
-          handle_box ? return_open_box : return_locked_box
+          will_handle_box = true
+          max_critter_level = @picker.settings[:locksmith_pool][:max_critter_level]
+          will_handle_box = false if  max_critter_level > 0 && max_critter_level < @box_info[:critter_level].to_i
+          will_handle_box && handle_box ? return_open_box : return_locked_box
           @ancillary.deposit_silvers
 
           if @picker.box_count > @picker.settings[:lock_handling][:calibrate_after]
@@ -56,8 +59,19 @@ module Rpick
         end
 
         sleep 1
-        check_table_for_box
-        return true
+
+        if res =~ Dictionary.worker_box_regex
+          @box_info = {
+            tip_amount: $1,
+            critter: $2,
+            critter_level: $3,
+            box_type: $4
+          }
+
+          check_table_for_box
+          return true
+        end
+
       end
 
       def decrement_tip_request
@@ -91,7 +105,7 @@ module Rpick
       end
 
       def return_locked_box # return a box that could not be successfully handled
-        echo "Couldn't get this box, returning to the worker"
+        echo "Couldn't get this box, or won't because of settings. Returning to the worker"
         dothis "ask ##{@worker.id} about check", Dictionary.worker_give_up_regex
         sleep 1
         dothis "ask ##{@worker.id} about check", Dictionary.worker_unsuccessful_regex

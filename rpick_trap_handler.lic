@@ -185,7 +185,6 @@ module Rpick
 
       @failed_last_attempt = true
       standard_disarm
-      return false
     end
 
     def scarab_disarm
@@ -223,19 +222,11 @@ module Rpick
           fput "disarm ##{this_scarab.id}"
           waitrt?
         end
+
         fput "get ##{this_scarab.id}"
         fput "put scarab in ##{@picker.inventory[:containers][:scarab_container][:id]}"
         @picker.say_scarab_safe
-        # TODO Enable this and base it on a 'offer scarabs to customer' setting
-        #if @picker.workflow == 'other'
-          #offer_result = dothis "give ##{this_scarab.id} to #{@picker.customer_id}", /(has accepted|has declined)/
-
-          #if offer_result == /has declined/
-            #fput "put scarab in ##{@picker.inventory[:containers][:scarab_container][:id]}"
-          #end
-        #else
-          #fput "put scarab in ##{@picker.inventory[:containers][:scarab_container][:id]}"
-        #end
+        return true
       end
     end
 

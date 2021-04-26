@@ -23,7 +23,7 @@ module Rpick
 
       def handle_box
         trap_handler = TrapHandler.new(@current_box, @picker)
-        lock_handler = LockHandler.new(@current_box, @picker)
+        lock_handler = LockHandler.new(@current_box, @picker, @box_info)
 
         if trap_handler.detect_and_disarm
           return true if @picker.session_settings[:disarm_only]

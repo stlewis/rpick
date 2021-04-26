@@ -55,7 +55,7 @@ In addition to choosing a workflow to start, &lt;tt&gt;rpick&lt;/tt&gt; supports
 
 &lt;b&gt;relock&lt;/b&gt; - This option is mainly useful for rogues going through Lock Mastery training. It is only effective when running the &lt;tt&gt;worker&lt;/tt&gt; or &lt;tt&gt;self&lt;/tt&gt; workflows. When active, this option will cause you to pick open, relock, and then repick each box.
 
-&lt;b&gt;disarm&lt;/b&gt; - This option will cause you to &lt;i&gt;only&lt;/i&gt; disarm boxes. It is primarily useful when you intend to give the boxes to another person for unlocking/opening, such as a warrior for bashing or a magic-user for popping. As such it is only effective with the &lt;tt&gt;ground&lt;/tt&gt; and &lt;tt&gt;other&lt;/tt&gt; workflows.
+&lt;b&gt;disarm&lt;/b&gt; - This option will cause you to &lt;i&gt;only&lt;/i&gt; disarm boxes. It is primarily useful when you intend to give the boxes to another person for unlocking/opening, such as a warrior for bashing or a magic-user for popping. 
 
 &lt;span size='large'&gt;Setup&lt;/span&gt;
 

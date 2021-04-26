@@ -7,7 +7,7 @@ before_dying {
     DownstreamHook.remove(h)
   end
 
-  if @picker && @picker.settings[:speech_and_misc][:remove_armor] && @armor_removed
+  if @picker && !@picker.settings[:speech_and_misc][:remove_armor].empty? && @armor_removed
     waitrt?
     fput "get ##{@picker.inventory[:worn_armor][:id]}"
     fput "wear ##{@picker.inventory[:worn_armor][:id]}"
