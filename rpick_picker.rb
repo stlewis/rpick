@@ -9,10 +9,11 @@ module Rpick
       @wild_measure_miss = false
       @settings = settings
       @session_settings = session_settings
-      parse_guild_info
       @inventory_manager = InventoryManagement.new(settings)
       @inventory = @inventory_manager.inventory
       @box_count = 0
+
+      parse_guild_info
     end
 
     def dex_bonus

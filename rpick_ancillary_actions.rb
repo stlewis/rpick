@@ -9,6 +9,18 @@ module Rpick
       @script = script
     end
 
+    def pick_test
+      bs = Struct.new(:id)
+      box = bs.new(42)
+      lh = Rpick::LockHandler.new(box, @picker)
+      lh.lock_data = {
+        current_caliper_read: 415,
+        current_lock_read: nil,
+      }
+
+      lh.get_best_lockpick
+    end
+
     def preflight_check
       woundables = %w(
         arms limbs torso back leftHand

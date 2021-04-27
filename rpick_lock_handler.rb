@@ -26,6 +26,7 @@ module Rpick
       end
 
       measure_lock
+      waitrt?
       pick_result = pick_box
 
       if pick_result
@@ -92,7 +93,7 @@ module Rpick
       return false if @picker.session_settings[:always_use_vaalin] || @picker.session_settings[:start_with_copper]
 
       fput "get ##{@picker.inventory[:calipers][:id]}"
-      measure_result = dothistimeout "lm measure ##{@box_id}", 2, Dictionary.caliper_read_regex
+      measure_result = dothis "lm measure ##{@box_id}", Dictionary.caliper_read_regex
       waitrt?
 
       if measure_result =~ Dictionary.unsuccessful_caliper_read_regex
@@ -127,7 +128,7 @@ module Rpick
       return true if @current_lockpick == previous_lockpick
 
       @picker.clear_hands([@box_id])
-      fput "get ##{lockpick[:id]}"
+      fput "get ##{best_lockpick[:id]}"
 
       return true
     end
@@ -155,7 +156,7 @@ module Rpick
       mindex = @better_than ? (Dictionary.lockpick_modifiers.keys.index(@better_than)) + 1 : 0
 
       Dictionary.lockpick_modifiers.keys[mindex..-1].each do |lockpick_type|
-        break unless best_type.empty?
+        break if best_type
 
         if @picker.can_pick_box?(lockpick_type, lock_difficulty) || (@picker.can_pick_box?(lockpick_type, lock_difficulty, with_lore: true) && @picker.knows_403?)
           best_type = lockpick_type

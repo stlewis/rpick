@@ -75,7 +75,7 @@ when 'repair'
   fput "stow all"
   @ancillary.repair_lockpicks
 when 'debug'
-  @ancillary.hand_test
+  @ancillary.pick_test
 else
   fput "stow all"
   kick_off_workflow(@picker, script, @ancillary)
