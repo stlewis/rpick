@@ -51,6 +51,7 @@ module Rpick
       end
 
       disarm_trap
+      return @trap_data[:is_disarmed]
     end
 
     def detect_trap
