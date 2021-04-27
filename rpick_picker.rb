@@ -145,6 +145,14 @@ module Rpick
       !can_pick_box(:vaalin, lock_difficulty, with_lore: with_lore)
     end
 
+    def should_use_vaalin?
+      always_use_vaalin = @picker.session_settings[:always_use_vaalin]
+      mind_fried = ['must rest', 'saturated'].include?(checkmind)
+      use_vaalin_when_fried = @settings[:lock_handling][:use_vaalin_when_fried]
+
+      always_use_vaalin || (mind_fried && use_vaalin_when_fried)
+    end
+
     def lore_bonus(spell, skill, selfcast = nil)
       selfcast = Spell[spell].known? if selfcast.nil?
       bonus = (Char.level/2).floor + (skill*0.1).floor + dex_bonus + (Spells.minorelemental/4).floor
@@ -337,6 +345,10 @@ module Rpick
 
     def knows_408?
       Spell[408].known?
+    end
+
+    def repair_lockpick(lockpick_id)
+      fput "lm repair ##{lockpick_id}"
     end
 
     def say_scarab_found

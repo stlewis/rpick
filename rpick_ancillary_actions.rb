@@ -108,7 +108,6 @@ module Rpick
 
       return calibration_loop if @picker.can_field_calibrate_calipers?
 
-
       respond '#######################################################'
       respond '                    Rpick                              '
       respond "You can't field calibrate calipers yet!"
@@ -295,7 +294,7 @@ module Rpick
 
       if result =~ Dictionary.lockpick_repair_success_regex
         waitrt?
-        fput "put ##{lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"\
+        fput "put ##{lockpick[:id]} in ##{@picker.inventory[:containers][:lockpick_container][:id]}"
 
         if wire
           @picker.inventory_manager.use_wire(wire)

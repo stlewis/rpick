@@ -201,6 +201,8 @@ module Rpick
       broken_pick[:broken] = true
       @inventory[:broken_lockpicks] << broken_pick
       @inventory[:lockpicks][broken_pick[:type]].delete(broken_pick)
+
+      fput "put ##{lockpick_id} in ##{@inventory[:containers][:broken_lockpick_container][:id]}"
     end
 
     private
