@@ -218,7 +218,7 @@ module Rpick
     end
 
     def self.calipers_calibrated_regex
-      /(as finely\-tuned as you are possibly going to get them|Those calipers could not be more perfectly calibrated)/
+      /(glow with calibration|could not be more perfectly calibrated)/
     end
 
     def self.worker_give_up_regex

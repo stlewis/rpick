@@ -323,10 +323,11 @@ module Rpick
     def calibration_loop
       fput "get ##{@picker.inventory[:calipers][:id]}"
 
+      fput "lm calibrate ##{@picker.inventory[:calipers][:id]}"
       while line = get
-        fput "lm calibrate ##{@picker.inventory[:calipers][:id]}"
         waitrt?
         break if line =~ Dictionary.calipers_calibrated_regex
+        calibration_loop
       end
 
       fput "put ##{@picker.inventory[:calipers][:id]} in ##{@picker.inventory[:containers][:locksmith_container][:id]}"
