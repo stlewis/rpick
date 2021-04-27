@@ -18,10 +18,6 @@ module Rpick
       @box_is_open
     end
 
-    def box_in_hand
-      @picker.inventory_manager.box_in_hand(@box_id)
-    end
-
     def wedge_in_hand
       wedge_in_right = GameObj.right_hand.noun == 'wedge' ? GameObj.right_hand.id : nil
       wedge_in_left  = GameObj.left_hand.noun == 'wedge' ? GameObj.left_hand.id : nil
@@ -29,7 +25,7 @@ module Rpick
     end
 
     def detect_and_disarm
-      @picker.clear_hands([box_in_hand])
+      @picker.clear_hands([@box_id])
       @picker.cast_maintenance_spells_if_needed('traps')
 
       detect_times_setting = @picker.settings[:trap_handling][:detect_count].to_i
@@ -102,11 +98,11 @@ module Rpick
       @trap_data[:is_disarmed] = standard_disarm unless %i[scarab sphere scales plate].include?(@trap_data[:type])
       if @trap_data[:type] == :scarab
         @picker.say_scarab_found
-        @trap_data[:is_disarmed] = scarab_disarm
+        scarab_disarm
       end
-      @trap_data[:is_disarmed] = scales_disarm if @trap_data[:type] == :scales
-      @trap_data[:is_disarmed] = plate_disarm if @trap_data[:type] == :plate
-      @trap_data[:is_disarmed] = sphere_disarm if @trap_data[:type] == :sphere
+      scales_disarm if @trap_data[:type] == :scales
+      plate_disarm if @trap_data[:type] == :plate
+      sphere_disarm if @trap_data[:type] == :sphere
 
       fput "stop 404" if @picker.settings[:trap_handling][:cancel_404] && Spell[404].active?
       return @trap_data[:is_disarmed]
@@ -118,7 +114,7 @@ module Rpick
       @picker.cast_404_if_needed(@trap_data[:difficulty], @failed_last_attempt)
       waitrt?
 
-      @picker.clear_hands([box_in_hand, wedge_in_hand])
+      @picker.clear_hands([@box_id, wedge_in_hand])
 
       fput "get my wedge" unless wedge_in_hand
 
@@ -135,6 +131,7 @@ module Rpick
             waitrt?
             fput "put my wedge in ##{@picker.inventory[:containers][:wedge_container][:id]}"
             @box_is_open = true
+            @trap_data[:is_disarmed] = true
             return true
           end
         end
@@ -175,6 +172,7 @@ module Rpick
       waitrt?
 
       if disarm_result =~ success_match
+        @trap_data[:is_disarmed] = true
         @failed_last_attempt = false
         return true
       end
@@ -228,6 +226,7 @@ module Rpick
         fput "get ##{this_scarab.id}"
         fput "put scarab in ##{@picker.inventory[:containers][:scarab_container][:id]}"
         @picker.say_scarab_safe
+        @trap_data[:is_disarmed] = true
         return true
       end
     end
@@ -241,7 +240,7 @@ module Rpick
       if LockHandler.new(@box, @picker).handle_lock
         @box_is_open = true # The LockHandler won't attempt to repick this box after successful disarm based on this setting.
 
-        @picker.clear_hands([box_in_hand])
+        @picker.clear_hands([@box_id])
 
         fput "get #{@picker.inventory[:dagger][:id]}"
         if standard_disarm
@@ -270,6 +269,7 @@ module Rpick
       @picker.cast_408_if_needed(@box_id, @trap_data, true)
       while line = get
         if line =~ Dictionary.box_pop_disarm_success_regex
+          @trap_data[:is_disarmed] = true
           return true
         end
 
