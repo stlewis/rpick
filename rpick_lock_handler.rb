@@ -50,7 +50,7 @@ module Rpick
         end
 
         # Try wedging if able
-        if (unpickable_action == 'Unlock (407)' && ((!@picker.knows_407? && @picker.can_wedge_boxes?) || unpickable_action == 'Wedge') && @picker.has_wedges?)
+        if (@picker.can_wedge_boxes? && unpickable_action == 'Wedge' && @picker.has_wedges?)
           if Rpick::TrapHandler.new(@box, @picker).wedge_box
             fput "stop 403" if @picker.settings[:lock_handling][:cancel_403] && Spell[403].active?
             return true

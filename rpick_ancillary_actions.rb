@@ -10,15 +10,16 @@ module Rpick
     end
 
     def pick_test
-      bs = Struct.new(:id)
-      box = bs.new(42)
-      lh = Rpick::LockHandler.new(box, @picker)
-      lh.lock_data = {
-        current_caliper_read: 415,
-        current_lock_read: nil,
-      }
+      echo @picker.settings[:lock_handling][:unpickable_box_action]
+      #bs = Struct.new(:id)
+      #box = bs.new(42)
+      #lh = Rpick::LockHandler.new(box, @picker)
+      #lh.lock_data = {
+        #current_caliper_read: 415,
+        #current_lock_read: nil,
+      #}
 
-      lh.get_best_lockpick
+      #lh.get_best_lockpick
     end
 
     def preflight_check
