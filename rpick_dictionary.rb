@@ -271,6 +271,7 @@ module Rpick
     def self.store_bought_lockpicks
       {
         copper: [
+          'copper lockpick',
           'dark red copper lockpick',
           'wood-handled copper lockpick',
           'elm-handled thin copper lockpick',
@@ -282,10 +283,12 @@ module Rpick
           'opal-tipped bright copper lockpick',
         ],
         brass: [
+          'brass lockpick',
           'silver-edged twisted brass lockpick',
           'blue-tinged tarnished brass lockpick'
         ],
         steel: [
+          'steel lockpick',
           'twisted steel lockpick',
           'conch-inlaid watered steel lockpick',
           'tapered burnished steel lockpick',
@@ -298,20 +301,20 @@ module Rpick
           'ora-handled black steel lockpick',
         ],
         ivory:   [
+          'ivory lockpick',
           'gold-edged pale ivory lockpick',
           'stained white ivory lockpick',
         ],
         gold: [
+          'gold lockpick',
           'gleaming gold lockpick',
           'wire-wound lustrous gold lockpick',
           'tapered white gold lockpick',
           'silver-chased gold lockpick',
           'garnet-inset rose gold lockpick',
-          'gold lockpick',
           'rune-etched muted gold lockpick',
           'twisted gold lockpick',
           'acid-etched gold lockpick',
-          'gold lockpick',
           'chiseled rose gold lockpick',
         ],
         silver: [
@@ -320,6 +323,7 @@ module Rpick
           'dull brushed silver lockpick',
         ],
         mithril: [
+          'mithril lockpick',
           'ivory-inlaid mithril lockpick',
           'twisted silvery mithril lockpick',
           'blue-veined grey mithril lockpick',
@@ -333,6 +337,7 @@ module Rpick
           'blue-hued wavy mithril lockpick',
         ],
         ora: [
+          'ora lockpick',
           'platinum ora-tipped lockpick',
           'abalone-set ora lockpick',
           'silver-chased spiraled ora lockpick',
@@ -358,13 +363,15 @@ module Rpick
           'translucent golden glaes lockpick',
         ],
         laje:    [
+          'laje lockpick',
           'ivory-tipped black laje lockpick',
           'deep amber colored laje lockpick',
         ],
         vultite: [
-
+          'vultite lockpick'
         ],
         rolaren: [
+          'rolaren lockpick',
           'petrified tiger fang lockpick',
           'pearl-handled rolaren lockpick',
           'silver-edged dark rolaren lockpick',
@@ -375,9 +382,11 @@ module Rpick
           'shell-inlaid black rolaren lockpick',
         ],
         veniom: [
+          'veniom lockpick',
           'silk-wrapped veniom lockpick'
         ],
         invar: [
+          'invar lockpick',
           'jade-handled invar lockpick',
           'scallop-edged invar lockpick',
           'red-flecked dark invar lockpick',
@@ -392,6 +401,7 @@ module Rpick
           'red-speckled sturdy invar lockpick',
         ],
         alum: [
+          'alum lockpick',
           'opal-studded alum lockpick',
           'fine-toothed white alum lockpick',
           'slate grey narrow alum lockpick',
@@ -403,12 +413,14 @@ module Rpick
           'slim blackened alum lockpick',
         ],
         golvern: [
+          'golvern lockpick',
           'reinforced titian golvern lockpick',
           'burnished golvern lockpick',
           'tapering golvern-edged lockpick',
           'well-crafted narrow golvern lockpick',
         ],
         kelyn: [
+          'kelyn lockpick',
           'slender kelyn lockpick',
           'streaked russet kelyn lockpick',
           'tapered white kelyn lockpick',
@@ -419,6 +431,7 @@ module Rpick
           'polished golden kelyn lockpick',
         ],
         vaalin: [
+          'vaalin lockpick',
           'etched black vaalin lockpick',
           'pearl-handled white vaalin lockpick',
           'diamond-edged black vaalin lockpick',
