@@ -55,7 +55,7 @@ In addition to choosing a workflow to start, &lt;tt&gt;rpick&lt;/tt&gt; supports
 
 &lt;b&gt;relock&lt;/b&gt; - This option is mainly useful for rogues going through Lock Mastery training. It is only effective when running the &lt;tt&gt;worker&lt;/tt&gt; or &lt;tt&gt;self&lt;/tt&gt; workflows. When active, this option will cause you to pick open, relock, and then repick each box.
 
-&lt;b&gt;disarm&lt;/b&gt; - This option will cause you to &lt;i&gt;only&lt;/i&gt; disarm boxes. It is primarily useful when you intend to give the boxes to another person for unlocking/opening, such as a warrior for bashing or a magic-user for popping. 
+&lt;b&gt;disarm&lt;/b&gt; - This option will cause you to &lt;i&gt;only&lt;/i&gt; disarm boxes. It is primarily useful when you intend to give the boxes to another person for unlocking/opening, such as a warrior for bashing or a magic-user for popping.
 
 &lt;span size='large'&gt;Setup&lt;/span&gt;
 
@@ -781,7 +781,7 @@ If you have custom lockpicks you'd like to use, or if you need to override which
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="tooltip_markup" translatable="yes">When this option is checked, Rpick will use any lockpicks you have that were bought from NPC shops. For any lockpick type you do not have a store-bought lockpick for, Rpick will attempt to fall back on the list below.</property>
+                                <property name="tooltip_markup" translatable="yes">When this option is checked, Rpick will use any lockpicks you have that were either bought from NPC shops, retrieved from the treasure system, or created in a rogue workshop but <i>not customized</i>, (generic material lockpicks). </i>. For any lockpick type you have that does not meet this definition, Rpick will attempt to fall back on the list below.</property>
                                 <property name="active">True</property>
                                 <property name="draw_indicator">True</property>
                               </object>
@@ -2698,7 +2698,7 @@ If you fill this setting in, your armor will be removed and stowed at the beginn
                                           <object class="GtkEntry" id="max-critter-level">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="tooltip_markup" translatable="yes">The highest level critter you want to accept pool boxes for.  When set to a value higher than 0, any box from a creature of a level higher than this setting will be returned to the worker. 
+                                            <property name="tooltip_markup" translatable="yes">The highest level critter you want to accept pool boxes for.  When set to a value higher than 0, any box from a creature of a level higher than this setting will be returned to the worker.
 
 Keep in mind that the locksmith pool is designed to give you boxes that are within your abilities, regardless of your level relative to the critter! By setting this value, you will probably return a lot of boxes that you could have easily opened.</property>
                                           </object>
